@@ -1,11 +1,7 @@
-using System;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace GitHub.JPMikkers.DHCP;
@@ -23,31 +19,17 @@ public class UDPSocketLinux : IUDPSocket
 
     private readonly IPEndPoint _localEndPoint;
 
-    public IPEndPoint LocalEndPoint
-    {
-        get
-        {
-            return _localEndPoint;
-        }
-    }
+    public IPEndPoint LocalEndPoint => _localEndPoint;
 
     public UDPSocketLinux(IPEndPoint localEndPoint, int maxPacketSize, bool dontFragment, short ttl)
     {
         foreach(var nic in NetworkInterface.GetAllNetworkInterfaces())
-        {
             Console.WriteLine($"{nic.Id}");
 
-        }
-
         var selectedNic = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(x => x.GetIPProperties().UnicastAddresses.Select(a => a.Address).Contains(localEndPoint.Address))
-            .FirstOrDefault();
-
-        if(selectedNic is null)
-        {
+            .FirstOrDefault(x => x.GetIPProperties().UnicastAddresses.Select(a => a.Address).Contains(localEndPoint.Address)) ?? 
             throw new UDPSocketException($"Can't find the appropriate network interface associated with endpoint '{localEndPoint}'") { IsFatal = true };
-        }
-
+        
         _maxPacketSize = maxPacketSize;
         _disposed = false;
 
@@ -55,19 +37,17 @@ public class UDPSocketLinux : IUDPSocket
 
         _socket = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
         _socket.EnableBroadcast = true;
-        _socket.ExclusiveAddressUse = false;    //_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+        _socket.ExclusiveAddressUse = false;    
+        //_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         _socket.SendBufferSize = 65536;
         _socket.ReceiveBufferSize = 65536;
-        if(!_IPv6) _socket.DontFragment = dontFragment;
+        if(!_IPv6) 
+            _socket.DontFragment = dontFragment;
         if(ttl >= 0)
-        {
             _socket.Ttl = ttl;
-        }
 
         if(!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
             _socket.SetRawSocketOption(SOL_SOCKET, SO_BINDTODEVICE, Encoding.UTF8.GetBytes(selectedNic.Id));
-        }
         _socket.Bind(new IPEndPoint(IPAddress.Any, localEndPoint.Port));
         _localEndPoint = localEndPoint;
     }
@@ -80,14 +60,10 @@ public class UDPSocketLinux : IUDPSocket
             var mem = new Memory<byte>(new byte[_maxPacketSize]);
             var result = await _socket.ReceiveFromAsync(mem, new IPEndPoint(IPAddress.Any, 0), cancellationToken);
 
-            if(result.RemoteEndPoint is IPEndPoint endpoint)
-            {
-                return (endpoint, mem[..result.ReceivedBytes]);
-            }
-            else
-            {
+            if(result.RemoteEndPoint is not IPEndPoint endpoint)
                 throw new InvalidCastException("unexpected endpoint type");
-            }
+
+            return (endpoint, mem[..result.ReceivedBytes]);
         }
         catch(SocketException ex) when(ex.SocketErrorCode == SocketError.MessageSize)
         {

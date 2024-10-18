@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -14,19 +12,13 @@ public class DHCPStopEventArgs : EventArgs
 public enum OptionMode
 {
     Default,
-    Force
+    Force,
 }
 
-public struct OptionItem
+public readonly struct OptionItem(OptionMode mode, IDHCPOption option)
 {
-    public OptionMode Mode;
-    public IDHCPOption Option;
-
-    public OptionItem(OptionMode mode, IDHCPOption option)
-    {
-        this.Mode = mode;
-        this.Option = option;
-    }
+    public OptionMode Mode => mode;
+    public IDHCPOption Option => option;
 }
 
 public class ReservationItem
@@ -38,8 +30,7 @@ public class ReservationItem
 
     public string MacTaste
     {
-        get { return _macTaste; }
-
+        get => _macTaste;
         set
         {
             _macTaste = value;
@@ -58,12 +49,13 @@ public class ReservationItem
 
                         if(match.Groups["netmask"].Success)
                         {
-                            _prefixBits = Int32.Parse(match.Groups["netmask"].Value.Substring(1));
+                            _prefixBits = int.Parse(match.Groups["netmask"].Value.Substring(1));
                         }
                     }
                 }
                 catch
                 {
+                    // Oh well no op
                 }
             }
         }
@@ -101,15 +93,11 @@ public class ReservationItem
         {
             return MacMatch(client.HardwareAddress, _prefix, _prefixBits);
         }
-        else if(!string.IsNullOrWhiteSpace(HostName))
+        else if(!string.IsNullOrWhiteSpace(HostName) && 
+            !string.IsNullOrWhiteSpace(client.HostName) && 
+            client.HostName.StartsWith(HostName, true, CultureInfo.InvariantCulture))
         {
-            if(!string.IsNullOrWhiteSpace(client.HostName))
-            {
-                if(client.HostName.StartsWith(HostName, true, CultureInfo.InvariantCulture))
-                {
-                    return true;
-                }
-            }
+            return true;
         }
         return false;
     }

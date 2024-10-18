@@ -1,38 +1,29 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionParameterRequestList : DHCPOptionBase
 {
-    private readonly List<TDHCPOption> _requestList = new List<TDHCPOption>();
-
     #region IDHCPOption Members
 
-    public List<TDHCPOption> RequestList
-    {
-        get
-        {
-            return _requestList;
-        }
-    }
+    public List<TDHCPOption> RequestList { get; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionParameterRequestList result = new DHCPOptionParameterRequestList();
+        var result = new DHCPOptionParameterRequestList();
         while(true)
         {
-            int c = s.ReadByte();
-            if(c < 0) break;
-            result._requestList.Add((TDHCPOption)c);
+            var c = s.ReadByte();
+            if(c < 0) 
+                break;
+            result.RequestList.Add((TDHCPOption)c);
         }
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        foreach(TDHCPOption opt in _requestList)
+        foreach(TDHCPOption opt in RequestList)
         {
             s.WriteByte((byte)opt);
         }
@@ -43,17 +34,19 @@ public class DHCPOptionParameterRequestList : DHCPOptionBase
     public DHCPOptionParameterRequestList()
         : base(TDHCPOption.ParameterRequestList)
     {
+        RequestList = [];
     }
 
     public override string ToString()
     {
-        StringBuilder sb = new StringBuilder();
-        foreach(TDHCPOption opt in _requestList)
+        var sb = new StringBuilder();
+        foreach(TDHCPOption opt in RequestList)
         {
             sb.Append(opt.ToString());
             sb.Append(",");
         }
-        if(_requestList.Count > 0) sb.Remove(sb.Length - 1, 1);
+        if(RequestList.Count > 0) 
+            sb.Remove(sb.Length - 1, 1);
         return $"Option(name=[{OptionType}],value=[{sb}])";
     }
 }

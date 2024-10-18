@@ -1,4 +1,5 @@
 ﻿using GitHub.JPMikkers.DHCP;
+using GitHub.JPMikkers.DHCP.Options;
 using System;
 
 namespace ManagedDHCPService;

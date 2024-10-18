@@ -1,9 +1,10 @@
 ﻿using GitHub.JPMikkers.DHCP;
+using GitHub.JPMikkers.DHCP.Options;
 using System;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     public class OptionConfigurationVendorSpecificInformation : OptionConfiguration
     {
         public string Information;

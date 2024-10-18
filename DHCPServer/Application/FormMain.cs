@@ -1,11 +1,8 @@
 using GitHub.JPMikkers.DHCP;
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Reflection;
 using System.ServiceProcess;
-using System.Windows.Forms;
 
 namespace DHCPServerApp
 {
@@ -61,8 +58,9 @@ namespace DHCPServerApp
             {
                 _service.Start();
             }
-            catch(Exception)
+            catch
             {
+                //Oh
             }
             UpdateServiceStatus();
         }
@@ -73,8 +71,9 @@ namespace DHCPServerApp
             {
                 _service.Stop();
             }
-            catch(Exception)
+            catch
             {
+                //No
             }
             UpdateServiceStatus();
         }
@@ -104,13 +103,13 @@ namespace DHCPServerApp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            AboutBox about = new AboutBox();
+            var about = new AboutBox();
             about.ShowDialog(this);
         }
 
         private void buttonConfigure_Click(object sender, EventArgs e)
         {
-            FormConfigureOverview f = new FormConfigureOverview(Program.GetConfigurationPath());
+            var f = new FormConfigureOverview(Program.GetConfigurationPath());
             if(f.ShowDialog(this) == DialogResult.OK)
             {
                 UpdateServiceStatus();
@@ -127,39 +126,26 @@ namespace DHCPServerApp
             }
         }
 
-        private void eventLog1_EntryWritten(object sender, System.Diagnostics.EntryWrittenEventArgs e)
+        private void eventLog1_EntryWritten(object sender, EntryWrittenEventArgs e)
         {
             if(InvokeRequired)
             {
                 BeginInvoke(new EntryWrittenEventHandler(eventLog1_EntryWritten), sender, e);
                 return;
             }
-            else
-            {
-                AddEventLogEntry(e.Entry);
-            }
+            AddEventLogEntry(e.Entry);
         }
 
         private void AddEventLogEntry(EventLogEntry entry)
         {
             if(entry.TimeGenerated > _timeFilter)
             {
-                string entryType;
-                switch(entry.EntryType)
+                var entryType = entry.EntryType switch
                 {
-                    case EventLogEntryType.Error:
-                        entryType = "ERROR";
-                        break;
-
-                    case EventLogEntryType.Warning:
-                        entryType = "WARNING";
-                        break;
-
-                    default:
-                    case EventLogEntryType.Information:
-                        entryType = "INFO";
-                        break;
-                }
+                    EventLogEntryType.Error => "ERROR",
+                    EventLogEntryType.Warning => "WARNING",
+                    _ => "INFO",
+                };
                 textBox1.AppendText(entry.TimeGenerated.ToString("yyyy-MM-dd HH:mm:ss.fff") + " : " + entryType + " : " + entry.Message + "\r\n");
             }
         }
@@ -188,8 +174,9 @@ namespace DHCPServerApp
             {
                 SetTimeFilter(_timeFilter.AddDays(-1));
             }
-            catch(Exception)
+            catch
             {
+                //Not
             }
         }
 
@@ -199,8 +186,9 @@ namespace DHCPServerApp
             {
                 SetTimeFilter(_timeFilter.AddHours(-1));
             }
-            catch(Exception)
+            catch
             {
+                //Again
             }
         }
 
@@ -225,33 +213,35 @@ namespace DHCPServerApp
 
         private void buttonRefresh_Click(object sender, EventArgs e)
         {
-            BindingList<DHCPClientDisplayItem> bindingList = new BindingList<DHCPClientDisplayItem>();
+            var bindingList = new BindingList<DHCPClientDisplayItem>();
 
             try
             {
-                DHCPServerConfigurationList configurationList =
+                var configurationList =
                     DHCPServerConfigurationList.Read(Program.GetConfigurationPath());
 
-                foreach(DHCPServerConfiguration configuration in configurationList)
+                foreach(var configuration in configurationList)
                 {
                     try
                     {
-                        DHCPClientInformation clientInformation =
+                        var clientInformation =
                             DHCPClientInformation.Read(
                                 Program.GetClientInfoPath(configuration.Name, configuration.Address));
 
-                        foreach(DHCPClient client in clientInformation.Clients)
+                        foreach(var client in clientInformation.Clients)
                         {
                             bindingList.Add(new DHCPClientDisplayItem(configuration.Name, configuration.Address, client, _MACTaster.Taste(client.HardwareAddress)));
                         }
                     }
-                    catch(Exception)
+                    catch
                     {
+                        //F
                     }
                 }
             }
-            catch(Exception)
+            catch
             {
+                //F
             }
 
             dataGridView1.AutoGenerateColumns = false;
@@ -273,9 +263,9 @@ namespace DHCPServerApp
 
         private string BindProperty(object property, string propertyName)
         {
-            string retValue = "";
+            var retValue = "";
 
-            if(propertyName.Contains("."))
+            if(propertyName.Contains('.'))
             {
                 PropertyInfo[] arrayProperties;
                 string leftPropertyName;
@@ -283,7 +273,7 @@ namespace DHCPServerApp
                 leftPropertyName = propertyName.Substring(0, propertyName.IndexOf("."));
                 arrayProperties = property.GetType().GetProperties();
 
-                foreach(PropertyInfo propertyInfo in arrayProperties)
+                foreach(var propertyInfo in arrayProperties)
                 {
                     if(propertyInfo.Name == leftPropertyName)
                     {
@@ -311,75 +301,31 @@ namespace DHCPServerApp
 
     public class DHCPClientDisplayItem
     {
-        private string m_ServerName;
-        private string m_ServerIPAddress;
-        private DHCPClient m_Client;
-        private readonly string m_MacTaste;
+        public string ServerName { get; set; }
 
-        public string ServerName
-        {
-            get { return m_ServerName; }
-            set { m_ServerName = value; }
-        }
+        public string ServerIPAddress { get; set; }
 
-        public string ServerIPAddress
-        {
-            get { return m_ServerIPAddress; }
-            set { m_ServerIPAddress = value; }
-        }
+        public DHCPClient Client { get; set; }
 
-        public DHCPClient Client
-        {
-            get { return m_Client; }
-            set { m_Client = value; }
-        }
+        public string IdentifierAsString => Utils.BytesToHexString(Client.Identifier, ":");
 
-        public string IdentifierAsString
-        {
-            get
-            {
-                return Utils.BytesToHexString(m_Client.Identifier, ":");
-            }
-        }
+        public string HardwareAddressAsString => Utils.BytesToHexString(Client.HardwareAddress, ":");
 
-        public string HardwareAddressAsString
-        {
-            get
-            {
-                return Utils.BytesToHexString(m_Client.HardwareAddress, ":");
-            }
-        }
+        public string LeaseStartTimeAsString => Client.LeaseStartTime.ToString("yyyy-MM-dd hh:mm:ss");
 
-        public string LeaseStartTimeAsString
-        {
-            get
-            {
-                return m_Client.LeaseStartTime.ToString("yyyy-MM-dd hh:mm:ss");
-            }
-        }
+        public string LeaseEndTimeAsString => 
+            (Client.LeaseEndTime == DateTime.MaxValue) ? 
+                "Never" : 
+                Client.LeaseEndTime.ToString("yyyy-MM-dd hh:mm:ss");
 
-        public string LeaseEndTimeAsString
-        {
-            get
-            {
-                return (m_Client.LeaseEndTime == DateTime.MaxValue) ? "Never" : m_Client.LeaseEndTime.ToString("yyyy-MM-dd hh:mm:ss");
-            }
-        }
-
-        public string MACTaste
-        {
-            get
-            {
-                return m_MacTaste;
-            }
-        }
+        public string MACTaste { get; }
 
         public DHCPClientDisplayItem(string serverName, string serverAddress, DHCPClient client, string macTaste)
         {
-            m_ServerName = serverName;
-            m_ServerIPAddress = serverAddress;
-            m_Client = client;
-            m_MacTaste = macTaste;
+            ServerName = serverName;
+            ServerIPAddress = serverAddress;
+            Client = client;
+            MACTaste = macTaste;
         }
     }
 }

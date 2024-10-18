@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.ServiceProcess;
 
 namespace DHCPServerApp
@@ -19,9 +18,9 @@ namespace DHCPServerApp
         protected override void OnStart(string[] args)
         {
             _configuration = DHCPServerConfigurationList.Read(Program.GetConfigurationPath());
-            _servers = new List<DHCPServerResurrector>();
+            _servers = [];
 
-            foreach(DHCPServerConfiguration config in _configuration)
+            foreach(var config in _configuration)
             {
                 _servers.Add(new DHCPServerResurrector(config, _eventLog));
             }
@@ -29,16 +28,11 @@ namespace DHCPServerApp
 
         protected override void OnStop()
         {
-            foreach(DHCPServerResurrector server in _servers)
+            foreach(var server in _servers)
             {
                 server.Dispose();
             }
             _servers.Clear();
-        }
-
-        protected override void OnCustomCommand(int command)
-        {
-            base.OnCustomCommand(command);
         }
     }
 }

@@ -1,14 +1,13 @@
 ﻿using GitHub.JPMikkers.DHCP;
 using System.Net;
 using System.Threading.Channels;
-using Baksteen.Async;
 
 namespace Tests;
 
 public class FakeUDPSocket : IUDPSocket
 {
-    private Channel<(IPEndPoint targetEndPoint, ReadOnlyMemory<byte> msg)> _serverToClientChannel;
-    private Channel<(IPEndPoint clientEndPoint, ReadOnlyMemory<byte> msg)> _clientToServerChannel;
+    private readonly Channel<(IPEndPoint targetEndPoint, ReadOnlyMemory<byte> msg)> _serverToClientChannel;
+    private readonly Channel<(IPEndPoint clientEndPoint, ReadOnlyMemory<byte> msg)> _clientToServerChannel;
 
     public required IPEndPoint LocalEndPoint { get; init; }
 

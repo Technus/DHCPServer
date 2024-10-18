@@ -1,33 +1,23 @@
-﻿using System;
-using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionIPAddressLeaseTime : DHCPOptionBase
 {
-    private TimeSpan _leaseTime;
-
     #region IDHCPOption Members
 
-    public TimeSpan LeaseTime
-    {
-        get
-        {
-            return _leaseTime;
-        }
-    }
+    public TimeSpan LeaseTime { get; private set; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionIPAddressLeaseTime result = new DHCPOptionIPAddressLeaseTime();
-        if(s.Length != 4) throw new IOException("Invalid DHCP option length");
-        result._leaseTime = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
+        var result = new DHCPOptionIPAddressLeaseTime();
+        if(s.Length != 4) 
+            throw new IOException("Invalid DHCP option length");
+        result.LeaseTime = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        ParseHelper.WriteUInt32(s, (uint)_leaseTime.TotalSeconds);
+        ParseHelper.WriteUInt32(s, (uint)LeaseTime.TotalSeconds);
     }
 
     #endregion
@@ -35,20 +25,17 @@ public class DHCPOptionIPAddressLeaseTime : DHCPOptionBase
     public DHCPOptionIPAddressLeaseTime()
         : base(TDHCPOption.IPAddressLeaseTime)
     {
+        LeaseTime = TimeSpan.Zero;
     }
 
     public DHCPOptionIPAddressLeaseTime(TimeSpan leaseTime)
         : base(TDHCPOption.IPAddressLeaseTime)
     {
-        _leaseTime = leaseTime;
-        if(_leaseTime > Utils.InfiniteTimeSpan)
-        {
-            _leaseTime = Utils.InfiniteTimeSpan;
-        }
+        LeaseTime = leaseTime > Utils.InfiniteTimeSpan ? Utils.InfiniteTimeSpan : leaseTime;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{(_leaseTime == Utils.InfiniteTimeSpan ? "Infinite" : _leaseTime.ToString())}])";
+        return $"Option(name=[{OptionType}],value=[{(LeaseTime == Utils.InfiniteTimeSpan ? "Infinite" : LeaseTime.ToString())}])";
     }
 }

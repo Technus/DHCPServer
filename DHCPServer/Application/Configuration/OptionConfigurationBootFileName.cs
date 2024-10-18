@@ -1,9 +1,9 @@
 ﻿using GitHub.JPMikkers.DHCP;
-using System;
+using GitHub.JPMikkers.DHCP.Options;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     public class OptionConfigurationBootFileName : OptionConfiguration
     {
         public string Name;

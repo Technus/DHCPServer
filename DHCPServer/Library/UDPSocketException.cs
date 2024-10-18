@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Runtime.Serialization;
 
 namespace GitHub.JPMikkers.DHCP;
 
@@ -17,5 +17,10 @@ public class UDPSocketException : Exception
 
     public UDPSocketException(string message, Exception inner) : base(message, inner) 
     { 
+    }
+
+    [Obsolete("Serializable...")]
+    protected UDPSocketException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
     }
 }

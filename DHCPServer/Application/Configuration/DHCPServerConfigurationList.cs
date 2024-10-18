@@ -1,14 +1,12 @@
-﻿using System;
-using System.ComponentModel;
-using System.IO;
+﻿using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
-    public class DHCPServerConfigurationList : BindingList<DHCPServerConfiguration>
+    [Serializable]
+    public sealed class DHCPServerConfigurationList : BindingList<DHCPServerConfiguration>
     {
-        private static readonly XmlSerializer s_serializer = new XmlSerializer(typeof(DHCPServerConfigurationList));
+        private static readonly XmlSerializer s_serializer = new(typeof(DHCPServerConfigurationList));
 
         public static DHCPServerConfigurationList Read(string file)
         {
@@ -16,14 +14,12 @@ namespace DHCPServerApp
 
             if(File.Exists(file))
             {
-                using(Stream s = File.OpenRead(file))
-                {
-                    result = (DHCPServerConfigurationList)s_serializer.Deserialize(s);
-                }
+                using var s = File.OpenRead(file);
+                result = (DHCPServerConfigurationList)s_serializer.Deserialize(s);
             }
             else
             {
-                result = new DHCPServerConfigurationList();
+                result = [];
             }
 
             return result;
@@ -38,10 +34,8 @@ namespace DHCPServerApp
                 Directory.CreateDirectory(dirName);
             }
 
-            using(Stream s = File.Open(file, FileMode.Create))
-            {
-                s_serializer.Serialize(s, this);
-            }
+            using var s = File.Open(file, FileMode.Create);
+            s_serializer.Serialize(s, this);
         }
     }
 }

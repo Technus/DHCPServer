@@ -1,10 +1,11 @@
 ﻿using GitHub.JPMikkers.DHCP;
+using GitHub.JPMikkers.DHCP.Options;
 using System;
 using System.IO;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     public class OptionConfigurationVendorClassIdentifier : OptionConfiguration
     {
         public string DataAsString;
@@ -26,7 +27,7 @@ namespace DHCPServerApp
             }
             else
             {
-                MemoryStream m = new MemoryStream();
+                using var m = new MemoryStream();
                 ParseHelper.WriteString(m, DataAsString);
                 m.Flush();
                 data = m.ToArray();

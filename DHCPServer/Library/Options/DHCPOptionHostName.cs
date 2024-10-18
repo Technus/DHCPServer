@@ -1,31 +1,21 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionHostName : DHCPOptionBase
 {
-    private string _hostName = string.Empty;
-
     #region IDHCPOption Members
 
-    public string HostName
-    {
-        get
-        {
-            return _hostName;
-        }
-    }
+    public string HostName { get; private set; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionHostName result = new DHCPOptionHostName();
-        result._hostName = ParseHelper.ReadString(s);
+        var result = new DHCPOptionHostName();
+        result.HostName = ParseHelper.ReadString(s);
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        ParseHelper.WriteString(s, ZeroTerminatedStrings, _hostName);
+        ParseHelper.WriteString(s, HostName, ZeroTerminatedStrings);
     }
 
     #endregion
@@ -33,16 +23,17 @@ public class DHCPOptionHostName : DHCPOptionBase
     public DHCPOptionHostName()
         : base(TDHCPOption.HostName)
     {
+        HostName = string.Empty;
     }
 
     public DHCPOptionHostName(string hostName)
         : base(TDHCPOption.HostName)
     {
-        _hostName = hostName;
+        HostName = hostName;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{_hostName}])";
+        return $"Option(name=[{OptionType}],value=[{HostName}])";
     }
 }

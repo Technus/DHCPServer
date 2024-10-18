@@ -1,27 +1,20 @@
-using System;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Windows.Forms;
 
 namespace DHCPServerApp
 {
     public partial class FormPickAdapter : Form
     {
-        private IPAddress _address = IPAddress.Loopback;
-
-        public IPAddress Address
-        {
-            get { return _address; }
-        }
+        public IPAddress Address { get; private set; } = IPAddress.Loopback;
 
         public FormPickAdapter()
         {
             InitializeComponent();
-            IPGlobalProperties computerProperties = IPGlobalProperties.GetIPGlobalProperties();
-            NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+            var computerProperties = IPGlobalProperties.GetIPGlobalProperties();//todo why?
+            var nics = NetworkInterface.GetAllNetworkInterfaces();
             comboBoxAdapter.DisplayMember = "Description";
-            foreach(NetworkInterface adapter in nics)
+            foreach(var adapter in nics)
             {
                 comboBoxAdapter.Items.Add(adapter);
             }
@@ -37,7 +30,7 @@ namespace DHCPServerApp
 
                 try
                 {
-                    NetworkInterface adapter = (NetworkInterface)comboBoxAdapter.SelectedItem;
+                    var adapter = (NetworkInterface)comboBoxAdapter.SelectedItem;
 
                     foreach(var uni in adapter.GetIPProperties().UnicastAddresses)
                     {
@@ -55,8 +48,9 @@ namespace DHCPServerApp
                         }
                     }
                 }
-                catch(Exception)
+                catch
                 {
+                    //O OK
                 }
 
                 if(comboBoxUnicast.Items.Count > 0)
@@ -70,7 +64,7 @@ namespace DHCPServerApp
         {
             if(comboBoxUnicast.SelectedIndex >= 0)
             {
-                _address = (IPAddress)comboBoxUnicast.SelectedItem;
+                Address = (IPAddress)comboBoxUnicast.SelectedItem;
             }
         }
     }

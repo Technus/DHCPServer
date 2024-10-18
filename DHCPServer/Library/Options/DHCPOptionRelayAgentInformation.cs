@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionRelayAgentInformation : DHCPOptionBase
 {
@@ -21,51 +19,47 @@ public class DHCPOptionRelayAgentInformation : DHCPOptionBase
         DHCPv4VirtualSubnetSelectionControl = 152,  // RFC 6607
     }
 
-    private byte[] _data;
-    private byte[] _agentCircuitId;
-    private byte[] _agentRemoteId;
+    public byte[] Data { get; private set; }
 
-    public byte[] AgentCircuitId
-    {
-        get { return _agentCircuitId; }
-    }
+    public byte[] AgentCircuitId { get; private set; }
 
-    public byte[] AgentRemoteId
-    {
-        get { return _agentRemoteId; }
-    }
+    public byte[] AgentRemoteId { get; private set; }
 
     #region IDHCPOption Members
 
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionRelayAgentInformation();
-        result._data = new byte[s.Length];
-        s.Read(result._data, 0, result._data.Length);
+        result.Data = new byte[s.Length];
+        if(s.Read(result.Data, 0, result.Data.Length)!= result.Data.Length)
+            throw new IOException();
 
         // subOptionStream
-        var suStream = new MemoryStream(_data);
+        using var suStream = new MemoryStream(result.Data);
 
         while(true)
         {
             int suCode = suStream.ReadByte();
-            if(suCode == -1 || suCode == 255) break;
-            else if(suCode == 0) continue;
-            else
+            if(suCode == -1 || suCode == (byte)TDHCPOption.End)//is it even valid???
+                break;
+            else if(suCode != 0)
             {
                 int suLen = suStream.ReadByte();
-                if(suLen == -1) break;
+                if(suLen == -1)
+                    break;
 
                 switch((SubOption)suCode)
                 {
                     case SubOption.AgentCircuitId:
-                        result._agentCircuitId = new byte[suLen];
-                        suStream.Read(result._agentCircuitId, 0, suLen);
+                        result.AgentCircuitId = new byte[suLen];
+                        if(suStream.Read(result.AgentCircuitId, 0, suLen) != suLen)
+                            throw new IOException();
                         break;
 
                     case SubOption.AgentRemoteId:
-                        result._agentRemoteId = new byte[suLen];
-                        suStream.Read(result._agentRemoteId, 0, suLen);
+                        result.AgentRemoteId = new byte[suLen];
+                        if(suStream.Read(result.AgentRemoteId, 0, suLen) != suLen)
+                            throw new IOException();
                         break;
 
                     default:
@@ -79,7 +73,7 @@ public class DHCPOptionRelayAgentInformation : DHCPOptionBase
 
     public override void ToStream(Stream s)
     {
-        s.Write(_data, 0, _data.Length);
+        s.Write(Data, 0, Data.Length);
     }
 
     #endregion
@@ -87,13 +81,13 @@ public class DHCPOptionRelayAgentInformation : DHCPOptionBase
     public DHCPOptionRelayAgentInformation()
         : base(TDHCPOption.RelayAgentInformation)
     {
-        _data = new byte[0];
-        _agentCircuitId = new byte[0];
-        _agentRemoteId = new byte[0];
+        Data = [];
+        AgentCircuitId = [];
+        AgentRemoteId = [];
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}], value=[AgentCircuitId=[{Utils.BytesToHexString(_agentCircuitId, " ")}], AgentRemoteId=[{Utils.BytesToHexString(_agentCircuitId, " ")}]])";
+        return $"Option(name=[{OptionType}], value=[AgentCircuitId=[{Utils.BytesToHexString(AgentCircuitId, " ")}], AgentRemoteId=[{Utils.BytesToHexString(AgentCircuitId, " ")}]])";
     }
 }

@@ -1,11 +1,10 @@
 ﻿using GitHub.JPMikkers.DHCP;
-using System;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     [XmlInclude(typeof(OptionConfigurationTFTPServerName))]
     [XmlInclude(typeof(OptionConfigurationBootFileName))]
     [XmlInclude(typeof(OptionConfigurationVendorSpecificInformation))]
@@ -21,7 +20,7 @@ namespace DHCPServerApp
         [OptionalField]
         public bool ZeroTerminatedStrings;
 
-        public OptionConfiguration()
+        protected OptionConfiguration()
         {
             Mode = OptionMode.Default;
         }

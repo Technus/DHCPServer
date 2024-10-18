@@ -1,9 +1,7 @@
 using GitHub.JPMikkers.DHCP;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Threading;
+using Timer = System.Threading.Timer;
 
 namespace DHCPServerApp
 {
@@ -24,8 +22,8 @@ namespace DHCPServerApp
             _disposed = false;
             _config = config;
             _eventLog = eventLog;
-            _retryTimer = new Timer(new TimerCallback(Resurrect));
-            Resurrect(null);
+            _retryTimer = new Timer(new TimerCallback(x=>Resurrect()));
+            Resurrect();
         }
 
         ~DHCPServerResurrector()
@@ -40,7 +38,7 @@ namespace DHCPServerApp
             }
         }
 
-        private void Resurrect(object state)
+        private void Resurrect()
         {
             lock(_lock)
             {
@@ -48,7 +46,7 @@ namespace DHCPServerApp
                 {
                     try
                     {
-                        _server = new DHCPServer(Program.GetClientInfoPath(_config.Name, _config.Address));
+                        _server = new DHCPServer(default, Program.GetClientInfoPath(_config.Name, _config.Address), default);//TODO
                         _server.EndPoint = new IPEndPoint(IPAddress.Parse(_config.Address), 67);
                         _server.SubnetMask = IPAddress.Parse(_config.NetMask);
                         _server.PoolStart = IPAddress.Parse(_config.PoolStart);
@@ -57,22 +55,22 @@ namespace DHCPServerApp
                         _server.OfferExpirationTime = TimeSpan.FromSeconds(Math.Max(1, _config.OfferTime));
                         _server.MinimumPacketSize = _config.MinimumPacketSize;
 
-                        List<OptionItem> options = new List<OptionItem>();
-                        foreach(OptionConfiguration optionConfiguration in _config.Options)
+                        var options = new List<OptionItem>();
+                        foreach(var optionConfiguration in _config.Options)
                         {
                             options.Add(optionConfiguration.ConstructOptionItem());
                         }
                         _server.Options = options;
 
-                        List<ReservationItem> reservations = new List<ReservationItem>();
-                        foreach(ReservationConfiguration reservationConfiguration in _config.Reservations)
+                        var reservations = new List<ReservationItem>();
+                        foreach(var reservationConfiguration in _config.Reservations)
                         {
                             reservations.Add(reservationConfiguration.ConstructReservationItem());
                         }
                         _server.Reservations = reservations;
 
                         _server.OnStatusChange += server_OnStatusChange;
-                        _server.OnTrace += server_OnTrace;
+                        //_server.OnTrace += server_OnTrace;
                         _server.Start();
                     }
                     catch(Exception)
@@ -88,14 +86,14 @@ namespace DHCPServerApp
             _eventLog.WriteEntry($"{_config.Name} : {msg}", entryType);
         }
 
-        private void server_OnTrace(object sender, DHCPTraceEventArgs e)
-        {
-            Log(EventLogEntryType.Information, e.Message);
-        }
+        //private void server_OnTrace(object sender, DHCPTraceEventArgs e)
+        //{
+        //    Log(EventLogEntryType.Information, e.Message);
+        //}
 
         private void server_OnStatusChange(object sender, DHCPStopEventArgs e)
         {
-            DHCPServer server = (DHCPServer)sender;
+            var server = (DHCPServer)sender;
 
             if(server.Active)
             {
@@ -121,9 +119,9 @@ namespace DHCPServerApp
                     if(_server != null)
                     {
                         _server.OnStatusChange -= server_OnStatusChange;
-                        _server.OnTrace -= server_OnTrace;
+                        //_server.OnTrace -= server_OnTrace;
                         _server.Dispose();
-                        _server = null;
+                        _server = null!;
                     }
                     // initiate retry timer
                     _retryTimer.Change(RetryTime, Timeout.Infinite);
@@ -131,7 +129,7 @@ namespace DHCPServerApp
             }
         }
 
-        protected void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if(disposing)
             {
@@ -148,7 +146,7 @@ namespace DHCPServerApp
                         {
                             _server.OnStatusChange -= server_OnStatusChange;
                             _server.Dispose();
-                            _server.OnTrace -= server_OnTrace;
+                            //_server.OnTrace -= server_OnTrace;
                             _server = null;
                         }
                     }

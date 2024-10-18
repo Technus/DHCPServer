@@ -1,12 +1,11 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     public class XmlSerializableIPAddress : IXmlSerializable
     {
         public IPAddress Address { get; set; }
@@ -15,10 +14,7 @@ namespace DHCPServerApp
         {
         }
 
-        public XmlSchema GetSchema()
-        {
-            return null;
-        }
+        public XmlSchema GetSchema() => null;
 
         public void ReadXml(XmlReader reader)
         {

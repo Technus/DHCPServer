@@ -1,33 +1,25 @@
-﻿using System.IO;
-using System.Net;
+﻿using System.Net;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionServerIdentifier : DHCPOptionBase
 {
-    private IPAddress _IPAddress = IPAddress.None;
-
-    public IPAddress IPAddress
-    {
-        get
-        {
-            return _IPAddress;
-        }
-    }
+    public IPAddress IPAddress { get; private set; }
 
     #region IDHCPOption Members
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionServerIdentifier result = new DHCPOptionServerIdentifier();
-        if(s.Length != 4) throw new IOException("Invalid DHCP option length");
-        result._IPAddress = ParseHelper.ReadIPAddress(s);
+        var result = new DHCPOptionServerIdentifier();
+        if(s.Length != 4) 
+            throw new IOException("Invalid DHCP option length");
+        result.IPAddress = ParseHelper.ReadIPAddress(s);
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        ParseHelper.WriteIPAddress(s, _IPAddress);
+        ParseHelper.WriteIPAddress(s, IPAddress);
     }
 
     #endregion
@@ -35,16 +27,17 @@ public class DHCPOptionServerIdentifier : DHCPOptionBase
     public DHCPOptionServerIdentifier()
         : base(TDHCPOption.ServerIdentifier)
     {
+        IPAddress = IPAddress.None;
     }
 
     public DHCPOptionServerIdentifier(IPAddress ipAddress)
         : base(TDHCPOption.ServerIdentifier)
     {
-        _IPAddress = ipAddress;
+        IPAddress = ipAddress;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{_IPAddress}])";
+        return $"Option(name=[{OptionType}],value=[{IPAddress}])";
     }
 }

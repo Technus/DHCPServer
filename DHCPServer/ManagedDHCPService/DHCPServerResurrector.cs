@@ -1,4 +1,5 @@
 using GitHub.JPMikkers.DHCP;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ namespace ManagedDHCPService;
 public class DHCPServerResurrector : IDisposable
 {
     private const int RetryTime = 30000;
-    private readonly object _lock;
+    private readonly object _lock = new();
     private bool _disposed;
     private readonly DHCPServerConfiguration _config;
     private readonly ILogger _logger;
@@ -21,11 +22,10 @@ public class DHCPServerResurrector : IDisposable
 
     public DHCPServerResurrector(DHCPServerConfiguration config, ILogger logger, string clientInfoPath)
     {
-        _lock = new object();
-        _disposed = false;
         _config = config;
-        _logger = logger;
+        _logger = logger ?? NullLogger.Instance;
         _clientInfoPath = clientInfoPath;
+
         _udpSocketFactory = new DefaultUDPSocketFactory(logger);
         _retryTimer = new Timer(new TimerCallback(Resurrect));
         Resurrect(null);

@@ -1,4 +1,5 @@
 using GitHub.JPMikkers.DHCP;
+using GitHub.JPMikkers.DHCP.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using System.Net;

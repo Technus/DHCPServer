@@ -1,10 +1,9 @@
 ﻿using GitHub.JPMikkers.DHCP;
-using System;
-using System.Linq;
+using GitHub.JPMikkers.DHCP.Options;
 
 namespace DHCPServerApp
 {
-    [Serializable()]
+    [Serializable]
     public class OptionConfigurationNetworkTimeProtocolServers : OptionConfigurationAddresses
     {
         public OptionConfigurationNetworkTimeProtocolServers()
@@ -17,7 +16,7 @@ namespace DHCPServerApp
             {
                 IPAddresses = Addresses
                     .Where(x => x.Address != null)
-                    .Select(x => x.Address)
+                    .Select(x => x.Address).ToList(),
             };
         }
     }

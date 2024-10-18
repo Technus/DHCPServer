@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Reflection;
-using System.Windows.Forms;
 
 namespace DHCPServerApp
 {
@@ -36,9 +32,9 @@ namespace DHCPServerApp
 
         private string BindProperty(object property, string propertyName)
         {
-            string retValue = "";
+            var retValue = "";
 
-            if(propertyName.Contains("."))
+            if(propertyName.Contains('.'))
             {
                 PropertyInfo[] arrayProperties;
                 string leftPropertyName;
@@ -46,7 +42,7 @@ namespace DHCPServerApp
                 leftPropertyName = propertyName.Substring(0, propertyName.IndexOf("."));
                 arrayProperties = property.GetType().GetProperties();
 
-                foreach(PropertyInfo propertyInfo in arrayProperties)
+                foreach(var propertyInfo in arrayProperties)
                 {
                     if(propertyInfo.Name == leftPropertyName)
                     {
@@ -72,7 +68,7 @@ namespace DHCPServerApp
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            DHCPServerConfiguration result = EditConfiguration(-1, new DHCPServerConfiguration());
+            var result = EditConfiguration(-1, new DHCPServerConfiguration());
             if(result != null)
             {
                 _configurationList.Add(result);
@@ -83,7 +79,7 @@ namespace DHCPServerApp
 
         private void buttonRemove_Click(object sender, EventArgs e)
         {
-            List<int> rowsToRemove = new List<int>();
+            var rowsToRemove = new List<int>();
             foreach(DataGridViewRow row in dataGridView1.SelectedRows)
             {
                 rowsToRemove.Add(row.Index);
@@ -91,9 +87,9 @@ namespace DHCPServerApp
             rowsToRemove.Sort();
             rowsToRemove.Reverse();
 
-            int currentIndex = dataGridView1.CurrentRow.Index;
+            var currentIndex = dataGridView1.CurrentRow.Index;
 
-            foreach(int x in rowsToRemove)
+            foreach(var x in rowsToRemove)
             {
                 if(currentIndex == x && currentIndex > 0)
                 {
@@ -144,7 +140,7 @@ namespace DHCPServerApp
             if(index >= 0 && index < dataGridView1.Rows.Count)
             {
                 dataGridView1.ClearSelection();
-                DataGridViewRow rowToSelect = dataGridView1.Rows[index];
+                var rowToSelect = dataGridView1.Rows[index];
                 rowToSelect.Selected = true;
                 rowToSelect.Cells[0].Selected = true;
                 dataGridView1.CurrentCell = rowToSelect.Cells[0];
@@ -155,7 +151,7 @@ namespace DHCPServerApp
         {
             if(index >= 0 && index < _configurationList.Count)
             {
-                DHCPServerConfiguration result = EditConfiguration(index, _configurationList[index]);
+                var result = EditConfiguration(index, _configurationList[index]);
                 if(result != null)
                 {
                     _configurationList.Insert(index, result);
@@ -166,7 +162,7 @@ namespace DHCPServerApp
 
         private bool ConfigurationCollides(int index, DHCPServerConfiguration config)
         {
-            for(int t = 0; t < _configurationList.Count; t++)
+            for(var t = 0; t < _configurationList.Count; t++)
             {
                 if(t != index && config.Address == _configurationList[t].Address)
                 {
@@ -179,10 +175,10 @@ namespace DHCPServerApp
 
         private DHCPServerConfiguration EditConfiguration(int index, DHCPServerConfiguration input)
         {
-            FormSettings f = new FormSettings();
+            var f = new FormSettings();
             f.Configuration = input;
 
-            DialogResult dialogResult = f.ShowDialog(this);
+            var dialogResult = f.ShowDialog(this);
 
             while(dialogResult == DialogResult.OK && ConfigurationCollides(index, f.Configuration))
             {

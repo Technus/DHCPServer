@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionFixedLength : DHCPOptionBase
 {
@@ -23,6 +21,6 @@ public class DHCPOptionFixedLength : DHCPOptionBase
 
     public override string ToString()
     {
-        return $"Option(name=[{_optionType}],value=[])";
+        return $"Option(name=[{OptionType}],value=[])";
     }
 }

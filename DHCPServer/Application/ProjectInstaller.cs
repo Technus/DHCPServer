@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.ComponentModel;
 using System.Configuration.Install;
@@ -17,7 +16,7 @@ namespace DHCPServerApp
 
         protected override void OnBeforeInstall(IDictionary savedState)
         {
-            System.Diagnostics.Trace.WriteLine("Creating DHCP service log");
+            Trace.WriteLine("Creating DHCP service log");
 
             try
             {
@@ -30,7 +29,7 @@ namespace DHCPServerApp
                 }
                 // write something to the event log, or else the EventLog component in the UI
                 // won't fire the updating events. I know, it sucks.
-                EventLog tmp = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
+                var tmp = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
                 tmp.WriteEntry("Installation complete");
                 tmp.MaximumKilobytes = 16000;   // value MUST be a factor of 64
                 tmp.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 7);
@@ -38,7 +37,7 @@ namespace DHCPServerApp
             }
             catch(Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine($"Exception: {ex}");
+                Trace.WriteLine($"Exception: {ex}");
             }
 
             Context.Parameters["assemblypath"] = $"\"{Context.Parameters["assemblypath"]}\" {"/service"}";
@@ -53,7 +52,7 @@ namespace DHCPServerApp
 
         protected override void OnAfterUninstall(IDictionary savedState)
         {
-            System.Diagnostics.Trace.WriteLine("Removing DHCP service log");
+            Trace.WriteLine("Removing DHCP service log");
 
             try
             {
@@ -69,7 +68,7 @@ namespace DHCPServerApp
             }
             catch(Exception ex)
             {
-                System.Diagnostics.Trace.WriteLine($"Exception: {ex}");
+                Trace.WriteLine($"Exception: {ex}");
             }
 
             base.OnAfterUninstall(savedState);

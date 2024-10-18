@@ -1,7 +1,5 @@
 using GitHub.JPMikkers.DHCP;
-using System;
 using System.Net;
-using System.Windows.Forms;
 
 namespace DHCPServerApp
 {
@@ -11,10 +9,7 @@ namespace DHCPServerApp
 
         public DHCPServerConfiguration Configuration
         {
-            get
-            {
-                return _configuration.Clone();
-            }
+            get => _configuration.Clone();
             set
             {
                 _configuration = value.Clone();
@@ -55,15 +50,16 @@ namespace DHCPServerApp
 
         private void buttonPickAddress_Click(object sender, EventArgs e)
         {
-            FormPickAdapter f = new FormPickAdapter();
+            var f = new FormPickAdapter();
             if(f.ShowDialog(this) == DialogResult.OK)
             {
-                IPAddress address = f.Address;
-                IPAddress netmask = Utils.GetSubnetMask(f.Address);
+                var address = f.Address;
+                var netmask = Utils.GetSubnetMask(f.Address);
 
                 _configuration.Address = address.ToString();
                 _configuration.NetMask = netmask.ToString();
-                _configuration.PoolStart = Utils.UInt32ToIPAddress(Utils.IPAddressToUInt32(address) & Utils.IPAddressToUInt32(netmask)).ToString();
+                _configuration.PoolStart = Utils.UInt32ToIPAddress(
+                    Utils.IPAddressToUInt32(address) & Utils.IPAddressToUInt32(netmask)).ToString();
                 _configuration.PoolEnd = Utils.UInt32ToIPAddress(
                     (Utils.IPAddressToUInt32(address) & Utils.IPAddressToUInt32(netmask)) |
                     ~Utils.IPAddressToUInt32(netmask)).ToString();

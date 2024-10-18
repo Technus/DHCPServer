@@ -1,11 +1,8 @@
-﻿using System;
+﻿using System.Configuration.Install;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
-using System.Windows.Forms;
 
 namespace DHCPServerApp
 {
@@ -26,24 +23,24 @@ namespace DHCPServerApp
         public static string GetClientInfoPath(string serverName, string serverAddress)
         {
             string configurationPath = GetConfigurationPath();
-            return Path.Combine(Path.GetDirectoryName(GetConfigurationPath()), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
+            return Path.Combine(Path.GetDirectoryName(configurationPath), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
         }
 
         public static string GetMacTastePath()
         {
             string configurationPath = GetConfigurationPath();
-            return Path.Combine(Path.GetDirectoryName(GetConfigurationPath()), "mactaste.cfg");
+            return Path.Combine(Path.GetDirectoryName(configurationPath), "mactaste.cfg");
         }
 
         public static bool HasAdministrativeRight()
         {
-            WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
+            var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         private static bool RunElevated(string fileName, string args)
         {
-            ProcessStartInfo processInfo = new ProcessStartInfo();
+            var processInfo = new ProcessStartInfo();
             processInfo.Verb = "runas";
             processInfo.FileName = fileName;
             processInfo.Arguments = args;
@@ -71,21 +68,19 @@ namespace DHCPServerApp
                 RunElevated(Switch_Install);
                 return;
             }
-            else
-            {
-                System.Diagnostics.Trace.WriteLine("Installing DHCP service");
 
-                try
-                {
-                    System.Configuration.Install.AssemblyInstaller Installer = new System.Configuration.Install.AssemblyInstaller(Assembly.GetExecutingAssembly(), new string[] { });
-                    Installer.UseNewContext = true;
-                    Installer.Install(null);
-                    Installer.Commit(null);
-                }
-                catch(Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine($"Exception: {ex}");
-                }
+            Trace.WriteLine("Installing DHCP service");
+
+            try
+            {
+                var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
+                Installer.UseNewContext = true;
+                Installer.Install(null);
+                Installer.Commit(null);
+            }
+            catch(Exception ex)
+            {
+                Trace.WriteLine($"Exception: {ex}");
             }
         }
 
@@ -96,20 +91,18 @@ namespace DHCPServerApp
                 RunElevated(Switch_Uninstall);
                 return;
             }
-            else
-            {
-                System.Diagnostics.Trace.WriteLine("Uninstalling DHCP service");
 
-                try
-                {
-                    System.Configuration.Install.AssemblyInstaller Installer = new System.Configuration.Install.AssemblyInstaller(Assembly.GetExecutingAssembly(), new string[] { });
-                    Installer.UseNewContext = true;
-                    Installer.Uninstall(null);
-                }
-                catch(Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine($"Exception: {ex}");
-                }
+            Trace.WriteLine("Uninstalling DHCP service");
+
+            try
+            {
+                var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
+                Installer.UseNewContext = true;
+                Installer.Uninstall(null);
+            }
+            catch(Exception ex)
+            {
+                Trace.WriteLine($"Exception: {ex}");
             }
         }
 
@@ -121,7 +114,7 @@ namespace DHCPServerApp
         {
             if(args.Length > 0 && args[0].ToLower() == Switch_Service)
             {
-                ServiceBase.Run(new ServiceBase[] { new DHCPService() });
+                ServiceBase.Run([new DHCPService()]);
             }
             else
             {
@@ -130,9 +123,10 @@ namespace DHCPServerApp
 
                 if(args.Length == 0)
                 {
-                    ServiceController serviceController = ServiceController.GetServices().FirstOrDefault(x => x.ServiceName == "DHCPServer");
+                    var serviceController = ServiceController.GetServices()
+                        .FirstOrDefault(x => x.ServiceName == "DHCPServer");
 
-                    if(serviceController == null)
+                    if(serviceController is null)
                     {
                         if(MessageBox.Show("Service has not been installed yet, install?", "DHCP Server", MessageBoxButtons.YesNo) == DialogResult.Yes)
                         {

@@ -1,30 +1,23 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionVendorClassIdentifier : DHCPOptionBase
 {
-    private byte[] _data;
-
-    public byte[] Data
-    {
-        get { return _data; }
-        set { _data = value; }
-    }
+    public byte[] Data { get; set; }
 
     #region IDHCPOption Members
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionVendorClassIdentifier result = new DHCPOptionVendorClassIdentifier();
-        result._data = new byte[s.Length];
-        s.Read(result._data, 0, result._data.Length);
+        var result = new DHCPOptionVendorClassIdentifier();
+        result.Data = new byte[s.Length];
+        if(s.Read(result.Data, 0, result.Data.Length) != result.Data.Length)
+            throw new IOException();
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        s.Write(_data, 0, _data.Length);
+        s.Write(Data, 0, Data.Length);
     }
 
     #endregion
@@ -32,17 +25,17 @@ public class DHCPOptionVendorClassIdentifier : DHCPOptionBase
     public DHCPOptionVendorClassIdentifier()
         : base(TDHCPOption.VendorClassIdentifier)
     {
-        _data = new byte[0];
+        Data = [];
     }
 
     public DHCPOptionVendorClassIdentifier(byte[] data)
         : base(TDHCPOption.VendorClassIdentifier)
     {
-        _data = data;
+        Data = data;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{Utils.BytesToHexString(_data, " ")}])";
+        return $"Option(name=[{OptionType}],value=[{Utils.BytesToHexString(Data, " ")}])";
     }
 }

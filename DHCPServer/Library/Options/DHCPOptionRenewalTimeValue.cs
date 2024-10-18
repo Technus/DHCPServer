@@ -1,33 +1,23 @@
-﻿using System;
-using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionRenewalTimeValue : DHCPOptionBase
 {
-    private TimeSpan _timeSpan;
-
     #region IDHCPOption Members
 
-    public TimeSpan TimeSpan
-    {
-        get
-        {
-            return _timeSpan;
-        }
-    }
+    public TimeSpan TimeSpan { get; private set; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionRenewalTimeValue result = new DHCPOptionRenewalTimeValue();
-        if(s.Length != 4) throw new IOException("Invalid DHCP option length");
-        result._timeSpan = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
+        var result = new DHCPOptionRenewalTimeValue();
+        if(s.Length != 4) 
+            throw new IOException("Invalid DHCP option length");
+        result.TimeSpan = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        ParseHelper.WriteUInt32(s, (uint)_timeSpan.TotalSeconds);
+        ParseHelper.WriteUInt32(s, (uint)TimeSpan.TotalSeconds);
     }
 
     #endregion
@@ -35,16 +25,17 @@ public class DHCPOptionRenewalTimeValue : DHCPOptionBase
     public DHCPOptionRenewalTimeValue()
         : base(TDHCPOption.RenewalTimeValue)
     {
+        TimeSpan = TimeSpan.Zero;
     }
 
     public DHCPOptionRenewalTimeValue(TimeSpan timeSpan)
         : base(TDHCPOption.RenewalTimeValue)
     {
-        _timeSpan = timeSpan;
+        TimeSpan = timeSpan;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{_timeSpan}])";
+        return $"Option(name=[{OptionType}],value=[{TimeSpan}])";
     }
 }

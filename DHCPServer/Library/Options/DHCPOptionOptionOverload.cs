@@ -1,32 +1,23 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionOptionOverload : DHCPOptionBase
 {
-    private byte _overload;
-
     #region IDHCPOption Members
 
-    public byte Overload
-    {
-        get
-        {
-            return _overload;
-        }
-    }
+    public byte Overload { get; private set; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionOptionOverload result = new DHCPOptionOptionOverload();
-        if(s.Length != 1) throw new IOException("Invalid DHCP option length");
-        result._overload = (byte)s.ReadByte();
+        var result = new DHCPOptionOptionOverload();
+        if(s.Length != 1) 
+            throw new IOException("Invalid DHCP option length");
+        result.Overload = (byte)s.ReadByte();
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        s.WriteByte(_overload);
+        s.WriteByte(Overload);
     }
 
     #endregion
@@ -34,16 +25,17 @@ public class DHCPOptionOptionOverload : DHCPOptionBase
     public DHCPOptionOptionOverload()
         : base(TDHCPOption.OptionOverload)
     {
+        Overload = default;
     }
 
     public DHCPOptionOptionOverload(byte overload)
         : base(TDHCPOption.OptionOverload)
     {
-        _overload = overload;
+        Overload = overload;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{_overload}])";
+        return $"Option(name=[{OptionType}],value=[{Overload}])";
     }
 }

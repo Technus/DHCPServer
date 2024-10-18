@@ -1,12 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GitHub.JPMikkers.DHCP;
 
@@ -16,7 +11,6 @@ public class DefaultUDPSocketFactory : IUDPSocketFactory
 
     public DefaultUDPSocketFactory(ILogger? logger)
     {
-        // see https://blog.rsuter.com/logging-with-ilogger-recommendations-and-best-practices/
         _logger = logger ?? NullLogger.Instance; 
     }
 

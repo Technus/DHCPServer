@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
@@ -15,15 +12,15 @@ namespace DHCPServerApp
             return (T)new DeepCopyContext().InternalCopy(original, true);
         }
 
-        private class DeepCopyContext
+        private sealed class DeepCopyContext
         {
             private static readonly Func<object, object> s_cloneMethod;
-            private readonly Dictionary<Object, Object> _visited;
+            private readonly Dictionary<object, object> _visited;
             private readonly Dictionary<Type, FieldInfo[]> _nonShallowFieldCache;
 
             static DeepCopyContext()
             {
-                MethodInfo cloneMethod = typeof(Object).GetMethod("MemberwiseClone", BindingFlags.NonPublic | BindingFlags.Instance);
+                var cloneMethod = typeof(object).GetMethod("MemberwiseClone", BindingFlags.NonPublic | BindingFlags.Instance);
                 var p1 = Expression.Parameter(typeof(object));
                 var body = Expression.Call(p1, cloneMethod);
                 s_cloneMethod = Expression.Lambda<Func<object, object>>(body, p1).Compile();
@@ -32,8 +29,8 @@ namespace DHCPServerApp
 
             public DeepCopyContext()
             {
-                _visited = new Dictionary<object, object>(new ReferenceEqualityComparer());
-                _nonShallowFieldCache = new Dictionary<Type, FieldInfo[]>();
+                _visited = new(new ReferenceEqualityComparer());
+                _nonShallowFieldCache = [];
             }
 
             private static bool IsPrimitiveOrImmutable(Type type)
@@ -44,31 +41,33 @@ namespace DHCPServerApp
                 }
                 else if(type.IsValueType)
                 {
-                    if(type.IsEnum) return true;
-                    if(type == typeof(Decimal)) return true;
-                    if(type == typeof(DateTime)) return true;
+                    if(type.IsEnum || type == typeof(decimal) || type == typeof(DateTime)) 
+                        return true;
                 }
                 else
                 {
-                    if(type == typeof(String)) return true;
+                    if(type == typeof(string)) 
+                        return true;
                 }
                 return false;
             }
 
-            public Object InternalCopy(Object originalObject, bool includeInObjectGraph)
+            public object InternalCopy(object originalObject, bool includeInObjectGraph)
             {
-                if(originalObject == null) return null;
+                if(originalObject == null) 
+                    return null;
+
                 var typeToReflect = originalObject.GetType();
                 if(IsPrimitiveOrImmutable(typeToReflect)) return originalObject;
 
-                if(typeof(XElement).IsAssignableFrom(typeToReflect)) return new XElement(originalObject as XElement);
-                if(typeof(Delegate).IsAssignableFrom(typeToReflect)) return null;
+                if(typeof(XElement).IsAssignableFrom(typeToReflect)) 
+                    return new XElement(originalObject as XElement);
 
-                if(includeInObjectGraph)
-                {
-                    object result;
-                    if(_visited.TryGetValue(originalObject, out result)) return result;
-                }
+                if(typeof(Delegate).IsAssignableFrom(typeToReflect)) 
+                    return null;
+
+                if(includeInObjectGraph && _visited.TryGetValue(originalObject, out var result))
+                    return result;
 
                 var cloneObject = s_cloneMethod(originalObject);
 
@@ -179,7 +178,9 @@ namespace DHCPServerApp
                 {
                     foreach(var fieldInfo in typeToReflect.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly))
                     {
-                        if(IsPrimitiveOrImmutable(fieldInfo.FieldType)) continue; // this is 5% faster than a where clause..
+                        if(IsPrimitiveOrImmutable(fieldInfo.FieldType)) 
+                            continue; // this is 5% faster than a where clause..
+
                         yield return fieldInfo;
                     }
                     typeToReflect = typeToReflect.BaseType;
@@ -188,16 +189,17 @@ namespace DHCPServerApp
         }
     }
 
-    public class ReferenceEqualityComparer : EqualityComparer<Object>
+    public class ReferenceEqualityComparer : EqualityComparer<object>
     {
-        public override bool Equals(object x, object y)
+        public override bool Equals(object? x, object? y)
         {
             return ReferenceEquals(x, y);
         }
 
         public override int GetHashCode(object obj)
         {
-            if(obj == null) return 0;
+            if(obj is null) 
+                return 0;
             // The RuntimeHelpers.GetHashCode method always calls the Object.GetHashCode method non-virtually, 
             // even if the object's type has overridden the Object.GetHashCode method.
             return RuntimeHelpers.GetHashCode(obj);

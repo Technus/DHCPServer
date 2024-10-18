@@ -1,45 +1,23 @@
-﻿using System.IO;
-
-namespace GitHub.JPMikkers.DHCP;
-
-public enum TDHCPMessageType
-{
-    DISCOVER = 1,
-    OFFER,
-    REQUEST,
-    DECLINE,
-    ACK,
-    NAK,
-    RELEASE,
-    INFORM,
-    Undefined
-}
+﻿namespace GitHub.JPMikkers.DHCP.Options;
 
 public class DHCPOptionMessageType : DHCPOptionBase
 {
-    private TDHCPMessageType _messageType;
-
     #region IDHCPOption Members
 
-    public TDHCPMessageType MessageType
-    {
-        get
-        {
-            return _messageType;
-        }
-    }
+    public TDHCPMessageType MessageType { get; private set; }
 
     public override IDHCPOption FromStream(Stream s)
     {
-        DHCPOptionMessageType result = new DHCPOptionMessageType();
-        if(s.Length != 1) throw new IOException("Invalid DHCP option length");
-        result._messageType = (TDHCPMessageType)s.ReadByte();
+        var result = new DHCPOptionMessageType();
+        if(s.Length != 1) 
+            throw new IOException("Invalid DHCP option length");
+        result.MessageType = (TDHCPMessageType)s.ReadByte();
         return result;
     }
 
     public override void ToStream(Stream s)
     {
-        s.WriteByte((byte)_messageType);
+        s.WriteByte((byte)MessageType);
     }
 
     #endregion
@@ -47,16 +25,17 @@ public class DHCPOptionMessageType : DHCPOptionBase
     public DHCPOptionMessageType()
         : base(TDHCPOption.MessageType)
     {
+        MessageType = TDHCPMessageType.Undefined;
     }
 
     public DHCPOptionMessageType(TDHCPMessageType messageType)
         : base(TDHCPOption.MessageType)
     {
-        _messageType = messageType;
+        MessageType = messageType;
     }
 
     public override string ToString()
     {
-        return $"Option(name=[{OptionType}],value=[{_messageType}])";
+        return $"Option(name=[{OptionType}],value=[{MessageType}])";
     }
 }

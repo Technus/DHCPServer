@@ -1,11 +1,11 @@
-using System;
+using GitHub.JPMikkers.DHCP.Options;
 using System.Net;
 using System.Xml.Serialization;
 
 namespace GitHub.JPMikkers.DHCP;
 
 [Serializable]
-public class DHCPClient : IEquatable<DHCPClient>
+public sealed class DHCPClient : IEquatable<DHCPClient>
 {
     public enum TState
     {
@@ -14,116 +14,46 @@ public class DHCPClient : IEquatable<DHCPClient>
         Assigned
     }
 
-    private byte[] _identifier = new byte[0];
-    private byte[] _hardwareAddress = new byte[0];
-    private string _hostName = "";
-    private TState _state = TState.Released;
-    private IPAddress _IPAddress = IPAddress.Any;
     private DateTime _offeredTime;
     private DateTime _leaseStartTime;
     private TimeSpan _leaseDuration;
 
     [XmlElement(DataType = "hexBinary")]
-    public byte[] Identifier
-    {
-        get
-        {
-            return _identifier;
-        }
-        set
-        {
-            _identifier = value;
-        }
-    }
+    public byte[] Identifier { get; set; } = [];
 
     [XmlElement(DataType = "hexBinary")]
-    public byte[] HardwareAddress
-    {
-        get
-        {
-            return _hardwareAddress;
-        }
-        set
-        {
-            _hardwareAddress = value;
-        }
-    }
+    public byte[] HardwareAddress { get; set; } = [];
 
-    public string HostName
-    {
-        get
-        {
-            return _hostName;
-        }
-        set
-        {
-            _hostName = value;
-        }
-    }
+    public string HostName { get; set; } = string.Empty;
 
-    public TState State
-    {
-        get
-        {
-            return _state;
-        }
-        set
-        {
-            _state = value;
-        }
-    }
+    public TState State { get; set; } = TState.Released;
 
     [XmlIgnore]
-    internal DateTime OfferedTime
-    {
-        get { return _offeredTime; }
-        set { _offeredTime = value; }
-    }
+    internal DateTime OfferedTime { get; set; }
 
-    public DateTime LeaseStartTime
-    {
-        get { return _leaseStartTime; }
-        set { _leaseStartTime = value; }
-    }
+    public DateTime LeaseStartTime { get; set; }
 
     [XmlIgnore]
     public TimeSpan LeaseDuration
     {
-        get { return _leaseDuration; }
-        set { _leaseDuration = Utils.SanitizeTimeSpan(value); }
+        get => _leaseDuration;
+        set => _leaseDuration = Utils.SanitizeTimeSpan(value);
     }
 
     public DateTime LeaseEndTime
     {
-        get
-        {
-            return Utils.IsInfiniteTimeSpan(_leaseDuration) ? DateTime.MaxValue : (_leaseStartTime + _leaseDuration);
-        }
-        set
-        {
-            if(value >= DateTime.MaxValue)
-            {
-                _leaseDuration = Utils.InfiniteTimeSpan;
-            }
-            else
-            {
-                _leaseDuration = value - _leaseStartTime;
-            }
-        }
+        get => Utils.IsInfiniteTimeSpan(_leaseDuration) ? DateTime.MaxValue : (_leaseStartTime + _leaseDuration);
+        set => _leaseDuration = value >= DateTime.MaxValue ? Utils.InfiniteTimeSpan : value - _leaseStartTime;
     }
 
     [XmlIgnore]
-    public IPAddress IPAddress
-    {
-        get { return _IPAddress; }
-        set { _IPAddress = value; }
-    }
+    public IPAddress IPAddress { get; set; } = IPAddress.Any;
 
     [XmlElement(ElementName = "IPAddress")]
     public string IPAddressAsString
     {
-        get { return _IPAddress.ToString(); }
-        set { _IPAddress = IPAddress.Parse(value); }
+        get => IPAddress.ToString();
+        set => IPAddress = IPAddress.Parse(value);
     }
 
     public DHCPClient()
@@ -132,39 +62,41 @@ public class DHCPClient : IEquatable<DHCPClient>
 
     public DHCPClient Clone()
     {
-        DHCPClient result = new DHCPClient();
-        result._identifier = this._identifier;
-        result._hardwareAddress = this._hardwareAddress;
-        result._hostName = this._hostName;
-        result._state = this._state;
-        result._IPAddress = this._IPAddress;
-        result._offeredTime = this._offeredTime;
-        result._leaseStartTime = this._leaseStartTime;
-        result._leaseDuration = this._leaseDuration;
+        var result = new DHCPClient
+        {
+            Identifier = Identifier,
+            HardwareAddress = HardwareAddress,
+            HostName = HostName,
+            State = State,
+            IPAddress = IPAddress,
+            _offeredTime = _offeredTime,
+            _leaseStartTime = _leaseStartTime,
+            _leaseDuration = _leaseDuration
+        };
         return result;
     }
 
     internal static DHCPClient CreateFromMessage(DHCPMessage message)
     {
-        DHCPClient result = new DHCPClient();
-        result._hardwareAddress = message.ClientHardwareAddress;
+        var result = new DHCPClient();
+        result.HardwareAddress = message.ClientHardwareAddress;
 
         var dhcpOptionHostName = message.FindOption<DHCPOptionHostName>();
 
         if(dhcpOptionHostName != null)
         {
-            result._hostName = dhcpOptionHostName.HostName;
+            result.HostName = dhcpOptionHostName.HostName;
         }
 
         var dhcpOptionClientIdentifier = message.FindOption<DHCPOptionClientIdentifier>();
 
         if(dhcpOptionClientIdentifier != null)
         {
-            result._identifier = dhcpOptionClientIdentifier.Data;
+            result.Identifier = dhcpOptionClientIdentifier.Data;
         }
         else
         {
-            result._identifier = message.ClientHardwareAddress;
+            result.Identifier = message.ClientHardwareAddress;
         }
 
         return result;
@@ -172,30 +104,23 @@ public class DHCPClient : IEquatable<DHCPClient>
 
     #region IEquatable and related
 
-    public override bool Equals(object? obj)
-    {
-        return Equals(obj as DHCPClient);
-    }
+    public override bool Equals(object? obj) => Equals(obj as DHCPClient);
+
+    public bool Equals(DHCPClient? other) =>
+        other is not null && Utils.ByteArraysAreEqual(Identifier, other.Identifier);
 
     public override int GetHashCode()
     {
         unchecked
         {
-            int result = 0;
-            foreach(byte b in _identifier) result = (result * 31) ^ b;
+            var result = 0;
+            foreach(var b in Identifier)
+                result = (result * 31) ^ b;
             return result;
         }
     }
 
-    public bool Equals(DHCPClient? other)
-    {
-        return (other != null && Utils.ByteArraysAreEqual(_identifier, other._identifier));
-    }
-
     #endregion
 
-    public override string ToString()
-    {
-        return $"{Utils.BytesToHexString(this._identifier, "-")} ({this.HostName})";
-    }
+    public override string ToString() => $"{Utils.BytesToHexString(Identifier, "-")} ({HostName})";
 }

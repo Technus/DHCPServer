@@ -13,7 +13,7 @@ public class DHCPServerResurrector : IDisposable
     private bool _disposed;
     private readonly DHCPServerConfiguration _config;
     private readonly EventLog _eventLog;
-
+    private readonly IUDPSocketFactory _udpSocketFactory;
     private DHCPServer? _server;
     private readonly Timer _retryTimer;
 
@@ -23,6 +23,7 @@ public class DHCPServerResurrector : IDisposable
         _config = config;
         _eventLog = eventLog;
         _retryTimer = new Timer(new TimerCallback(x => Resurrect()));
+        _udpSocketFactory = new DefaultUDPSocketFactory(default);
         Resurrect();
     }
 
@@ -47,7 +48,7 @@ public class DHCPServerResurrector : IDisposable
             {
                 try
                 {
-                    _server = new DHCPServer(default, Program.GetClientInfoPath(_config.Name, _config.Address), default);//TODO
+                    _server = new DHCPServer(default, Program.GetClientInfoPath(_config.Name, _config.Address), _udpSocketFactory);
                     _server.EndPoint = new IPEndPoint(IPAddress.Parse(_config.Address), 67);
                     _server.SubnetMask = IPAddress.Parse(_config.NetMask);
                     _server.PoolStart = IPAddress.Parse(_config.PoolStart);

@@ -105,7 +105,8 @@ public class ReservationItem
 
 public interface IDHCPServer : IDisposable
 {
-    event EventHandler<DHCPStopEventArgs?> OnStatusChange;
+    event Action<IDHCPServer, DHCPStopEventArgs?>? OnStatusChange;
+    event Action<IDHCPServer, string?>? OnTrace;
 
     IPEndPoint EndPoint { get; set; }
     IPAddress SubnetMask { get; set; }

@@ -8,17 +8,16 @@ namespace DHCPServerApp
     public class DHCPServerResurrector : IDisposable
     {
         private const int RetryTime = 30000;
-        private readonly object _lock;
+        private readonly SemaphoreSlim _semaphore = new(1,1);
         private bool _disposed;
         private readonly DHCPServerConfiguration _config;
         private readonly EventLog _eventLog;
 
-        private DHCPServer _server;
+        private DHCPServer? _server;
         private readonly Timer _retryTimer;
 
         public DHCPServerResurrector(DHCPServerConfiguration config, EventLog eventLog)
         {
-            _lock = new object();
             _disposed = false;
             _config = config;
             _eventLog = eventLog;
@@ -40,7 +39,8 @@ namespace DHCPServerApp
 
         private void Resurrect()
         {
-            lock(_lock)
+            _semaphore.Wait();
+            try
             {
                 if(!_disposed)
                 {
@@ -70,7 +70,7 @@ namespace DHCPServerApp
                         _server.Reservations = reservations;
 
                         _server.OnStatusChange += server_OnStatusChange;
-                        //_server.OnTrace += server_OnTrace;
+                        _server.OnTrace += server_OnTrace;
                         _server.Start();
                     }
                     catch(Exception)
@@ -79,6 +79,10 @@ namespace DHCPServerApp
                     }
                 }
             }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         private void Log(EventLogEntryType entryType, string msg)
@@ -86,15 +90,13 @@ namespace DHCPServerApp
             _eventLog.WriteEntry($"{_config.Name} : {msg}", entryType);
         }
 
-        //private void server_OnTrace(object sender, DHCPTraceEventArgs e)
-        //{
-        //    Log(EventLogEntryType.Information, e.Message);
-        //}
-
-        private void server_OnStatusChange(object sender, DHCPStopEventArgs e)
+        private void server_OnTrace(IDHCPServer server, string? trace)
         {
-            var server = (DHCPServer)sender;
+            Log(EventLogEntryType.Information, trace ?? "");
+        }
 
+        private void server_OnStatusChange(IDHCPServer server, DHCPStopEventArgs? e)
+        {
             if(server.Active)
             {
                 //Log(EventLogEntryType.Information, string.Format("{0} transfers in progress", server.ActiveTransfers));
@@ -111,21 +113,26 @@ namespace DHCPServerApp
 
         private void CleanupAndRetry()
         {
-            lock(_lock)
+            _semaphore.Wait();
+            try
             {
                 if(!_disposed)
                 {
                     // stop server
-                    if(_server != null)
+                    if(_server is not null)
                     {
                         _server.OnStatusChange -= server_OnStatusChange;
-                        //_server.OnTrace -= server_OnTrace;
+                        _server.OnTrace -= server_OnTrace;
                         _server.Dispose();
-                        _server = null!;
+                        _server = null;
                     }
                     // initiate retry timer
                     _retryTimer.Change(RetryTime, Timeout.Infinite);
                 }
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 
@@ -133,7 +140,8 @@ namespace DHCPServerApp
         {
             if(disposing)
             {
-                lock(_lock)
+                _semaphore.Wait();
+                try
                 {
                     if(!_disposed)
                     {
@@ -142,14 +150,18 @@ namespace DHCPServerApp
                         _retryTimer.Change(Timeout.Infinite, Timeout.Infinite);
                         _retryTimer.Dispose();
 
-                        if(_server != null)
+                        if(_server is not null)
                         {
                             _server.OnStatusChange -= server_OnStatusChange;
                             _server.Dispose();
-                            //_server.OnTrace -= server_OnTrace;
+                            _server.OnTrace -= server_OnTrace;
                             _server = null;
                         }
                     }
+                }
+                finally
+                {
+                    _semaphore.Release();
                 }
             }
         }

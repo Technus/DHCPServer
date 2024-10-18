@@ -23,7 +23,8 @@ public class DHCPServer : IDHCPServer
 
     #region IDHCPServer Members
 
-    public event EventHandler<DHCPStopEventArgs?> OnStatusChange = delegate (object? sender, DHCPStopEventArgs? args) { };
+    public event Action<IDHCPServer, DHCPStopEventArgs?>? OnStatusChange;
+    public event Action<IDHCPServer, string?>? OnTrace;
 
     public IPEndPoint EndPoint { get; set; } = new(IPAddress.Loopback, 67);
 
@@ -187,11 +188,12 @@ public class DHCPServer : IDHCPServer
     private void HandleStatusChange(DHCPStopEventArgs? data)
     {
         _updateClientInfoQueue.Enqueue(0);
-        OnStatusChange(this, data);
+        OnStatusChange?.Invoke(this, data);
     }
 
     internal void Trace(string msg)
     {
+        OnTrace?.Invoke(this, msg);
         _logger?.LogInformation(msg);
     }
 

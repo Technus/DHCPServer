@@ -1,3 +1,4 @@
+using DHCP.Server.Library;
 using DHCP.Server.Worker.Configuration;
 
 namespace DHCP.Server.Worker;
@@ -22,19 +23,14 @@ public class Worker : BackgroundService
         }
     }
 
-    private static string GetDHCPServerApplicationDataFolder()
-    {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "JPMikkers\\DHCP Server");
-    }
-
     private static string GetConfigurationPath()
     {
-        return Path.Combine(GetDHCPServerApplicationDataFolder(), "Configuration.xml");
+        return Path.Combine(Utils.GetSettingsPath(), "Configuration.xml");
     }
 
     public static string GetClientInfoPath(string serverName, string serverAddress)
     {
-        return Path.Combine(GetDHCPServerApplicationDataFolder(), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
+        return Path.Combine(Utils.GetSettingsPath(), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)

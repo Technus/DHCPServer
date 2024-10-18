@@ -7,6 +7,15 @@ namespace DHCP.Server.Library;
 
 public static class Utils
 {
+    public static string GetSettingsPath()
+    {
+        var root = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        var old = Path.Combine(root, "JPMikkers");
+        if(Directory.Exists(old))
+            return Path.Combine(old, "DHCP Server");
+        return Path.Combine(root, "DHCsharP Server");
+    }
+
     public static TimeSpan InfiniteTimeSpan { get; } = TimeSpan.FromSeconds(uint.MaxValue);
 
     public static bool IsInfiniteTimeSpan(this TimeSpan timeSpan) =>

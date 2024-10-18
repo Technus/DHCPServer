@@ -1,4 +1,5 @@
-﻿using System.Configuration.Install;
+﻿using DHCP.Server.Library;
+using System.Configuration.Install;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security.Principal;
@@ -17,7 +18,7 @@ static class Program
 
     public static string GetConfigurationPath()
     {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "JPMikkers\\DHCP Server\\Configuration.xml");
+        return Path.Combine(Utils.GetSettingsPath(), "Configuration.xml");
     }
 
     public static string GetClientInfoPath(string serverName, string serverAddress)

@@ -4,152 +4,155 @@ using System.Reflection;
 using System.Security.Principal;
 using System.ServiceProcess;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service;
+
+static class Program
 {
-    static class Program
+    public const string CustomEventLog = "DHCPServerLog";
+    public const string CustomEventSource = "DHCPServerSource";
+
+    private const string s_switch_Install = "/install";
+    private const string s_switch_Uninstall = "/uninstall";
+    private const string s_switch_Service = "/service";
+
+    public static string GetConfigurationPath()
     {
-        public const string CustomEventLog = "DHCPServerLog";
-        public const string CustomEventSource = "DHCPServerSource";
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "JPMikkers\\DHCP Server\\Configuration.xml");
+    }
 
-        private const string Switch_Install = "/install";
-        private const string Switch_Uninstall = "/uninstall";
-        private const string Switch_Service = "/service";
+    public static string GetClientInfoPath(string serverName, string serverAddress)
+    {
+        string configurationPath = GetConfigurationPath();
+        return Path.Combine(Path.GetDirectoryName(configurationPath), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
+    }
 
-        public static string GetConfigurationPath()
+    public static string GetMacTastePath()
+    {
+        string configurationPath = GetConfigurationPath();
+        return Path.Combine(Path.GetDirectoryName(configurationPath), "mactaste.cfg");
+    }
+
+    public static bool HasAdministrativeRight()
+    {
+        var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    private static bool RunElevated(string fileName, string args)
+    {
+        var processInfo = new ProcessStartInfo();
+        processInfo.Verb = "runas";
+        processInfo.FileName = fileName;
+        processInfo.Arguments = args;
+        processInfo.UseShellExecute = true;
+        try
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "JPMikkers\\DHCP Server\\Configuration.xml");
+            Process.Start(processInfo);
+            return true;
+        }
+        catch(Exception)
+        {
+            //Do nothing. Probably the user canceled the UAC window
+        }
+        return false;
+    }
+
+    public static bool RunElevated(string args)
+    {
+        return RunElevated(Application.ExecutablePath, args);
+    }
+
+    private static void Install()
+    {
+        if(!HasAdministrativeRight())
+        {
+            RunElevated(s_switch_Install);
+            return;
         }
 
-        public static string GetClientInfoPath(string serverName, string serverAddress)
+        Trace.WriteLine("Installing DHCP service");
+
+        try
         {
-            string configurationPath = GetConfigurationPath();
-            return Path.Combine(Path.GetDirectoryName(configurationPath), $"{serverName}_{serverAddress.Replace('.', '_')}.xml");
+            var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
+            Installer.UseNewContext = true;
+            Installer.Install(null);
+            Installer.Commit(null);
+        }
+        catch(Exception ex)
+        {
+            Trace.WriteLine($"Exception: {ex}");
+        }
+    }
+
+    private static void Uninstall()
+    {
+        if(!HasAdministrativeRight())
+        {
+            RunElevated(s_switch_Uninstall);
+            return;
         }
 
-        public static string GetMacTastePath()
+        Trace.WriteLine("Uninstalling DHCP service");
+
+        try
         {
-            string configurationPath = GetConfigurationPath();
-            return Path.Combine(Path.GetDirectoryName(configurationPath), "mactaste.cfg");
+            var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
+            Installer.UseNewContext = true;
+            Installer.Uninstall(null);
         }
-
-        public static bool HasAdministrativeRight()
+        catch(Exception ex)
         {
-            var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            Trace.WriteLine($"Exception: {ex}");
         }
+    }
 
-        private static bool RunElevated(string fileName, string args)
+    /// <summary>
+    /// The main entry point for the application.
+    /// </summary>
+    [STAThread]
+    static void Main(string[] args)
+    {
+        if(args.Length > 0 && args[0].ToLower() == s_switch_Service)
         {
-            var processInfo = new ProcessStartInfo();
-            processInfo.Verb = "runas";
-            processInfo.FileName = fileName;
-            processInfo.Arguments = args;
-            try
-            {
-                Process.Start(processInfo);
-                return true;
-            }
-            catch(Exception)
-            {
-                //Do nothing. Probably the user canceled the UAC window
-            }
-            return false;
+            ServiceBase.Run([new DHCPService()]);
         }
-
-        public static bool RunElevated(string args)
+        else
         {
-            return RunElevated(Application.ExecutablePath, args);
-        }
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
-        private static void Install()
-        {
-            if(!HasAdministrativeRight())
+            if(args.Length == 0)
             {
-                RunElevated(Switch_Install);
-                return;
-            }
+                var serviceController = ServiceController.GetServices()
+                    .FirstOrDefault(x => x.ServiceName == "DHCPServer");
 
-            Trace.WriteLine("Installing DHCP service");
-
-            try
-            {
-                var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
-                Installer.UseNewContext = true;
-                Installer.Install(null);
-                Installer.Commit(null);
-            }
-            catch(Exception ex)
-            {
-                Trace.WriteLine($"Exception: {ex}");
-            }
-        }
-
-        private static void Uninstall()
-        {
-            if(!HasAdministrativeRight())
-            {
-                RunElevated(Switch_Uninstall);
-                return;
-            }
-
-            Trace.WriteLine("Uninstalling DHCP service");
-
-            try
-            {
-                var Installer = new AssemblyInstaller(Assembly.GetExecutingAssembly(), []);
-                Installer.UseNewContext = true;
-                Installer.Uninstall(null);
-            }
-            catch(Exception ex)
-            {
-                Trace.WriteLine($"Exception: {ex}");
-            }
-        }
-
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main(string[] args)
-        {
-            if(args.Length > 0 && args[0].ToLower() == Switch_Service)
-            {
-                ServiceBase.Run([new DHCPService()]);
-            }
-            else
-            {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-
-                if(args.Length == 0)
+                if(serviceController is null)
                 {
-                    var serviceController = ServiceController.GetServices()
-                        .FirstOrDefault(x => x.ServiceName == "DHCPServer");
-
-                    if(serviceController is null)
+                    if(MessageBox.Show("Service has not been installed yet, install?", "DHCP Server", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
-                        if(MessageBox.Show("Service has not been installed yet, install?", "DHCP Server", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                        {
-                            Install();
-                        }
+                        Install();
                     }
-                    else
-                    {
-                        Application.Run(new FormMain(serviceController));
-                    }
+#if DEBUG
+                    Application.Run(new FormMain(null!));
+#endif
                 }
                 else
                 {
-                    switch(args[0].ToLower())
-                    {
-                        case Switch_Install:
-                            Install();
-                            break;
+                    Application.Run(new FormMain(serviceController));
+                }
+            }
+            else
+            {
+                switch(args[0].ToLower())
+                {
+                    case s_switch_Install:
+                        Install();
+                        break;
 
-                        case Switch_Uninstall:
-                            Uninstall();
-                            break;
-                    }
+                    case s_switch_Uninstall:
+                        Uninstall();
+                        break;
                 }
             }
         }

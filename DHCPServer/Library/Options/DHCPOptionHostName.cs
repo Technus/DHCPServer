@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionHostName : DHCPOptionBase
 {

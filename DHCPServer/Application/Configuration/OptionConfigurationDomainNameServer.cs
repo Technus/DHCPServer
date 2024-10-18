@@ -1,23 +1,22 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationDomainNameServer : OptionConfigurationAddresses
 {
-    [Serializable]
-    public class OptionConfigurationDomainNameServer : OptionConfigurationAddresses
+    public OptionConfigurationDomainNameServer()
     {
-        public OptionConfigurationDomainNameServer()
-        {
-        }
+    }
 
-        protected override IDHCPOption ConstructDHCPOption()
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        return new DHCPOptionDomainNameServer()
         {
-            return new DHCPOptionDomainNameServer()
-            {
-                IPAddresses = Addresses
-                    .Where(x => x.Address != null)
-                    .Select(x => x.Address).ToList(),
-            };
-        }
+            IPAddresses = Addresses
+                .Where(x => x.Address != null)
+                .Select(x => x.Address).ToList(),
+        };
     }
 }

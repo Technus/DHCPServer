@@ -1,17 +1,14 @@
-using GitHub.JPMikkers.DHCP;
+using DHCP.Server.Library;
+using DHCP.Server.Worker.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
-using System.Threading;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker;
 
 public class DHCPServerResurrector : IDisposable
 {
     private const int RetryTime = 30000;
-    private readonly object _lock = new();
+    private readonly SemaphoreSlim _semaphore = new(1,1);
     private bool _disposed;
     private readonly DHCPServerConfiguration _config;
     private readonly ILogger _logger;
@@ -45,7 +42,8 @@ public class DHCPServerResurrector : IDisposable
 
     private void Resurrect(object? state)
     {
-        lock(_lock)
+        _semaphore.Wait();
+        try
         {
             if(!_disposed)
             {
@@ -56,18 +54,18 @@ public class DHCPServerResurrector : IDisposable
                     _server.SubnetMask = IPAddress.Parse(_config.NetMask);
                     _server.PoolStart = IPAddress.Parse(_config.PoolStart);
                     _server.PoolEnd = IPAddress.Parse(_config.PoolEnd);
-                    _server.LeaseTime = (_config.LeaseTime > 0) ? TimeSpan.FromSeconds(_config.LeaseTime) : Utils.InfiniteTimeSpan;
+                    _server.LeaseTime = _config.LeaseTime > 0 ? TimeSpan.FromSeconds(_config.LeaseTime) : Utils.InfiniteTimeSpan;
                     _server.OfferExpirationTime = TimeSpan.FromSeconds(Math.Max(1, _config.OfferTime));
                     _server.MinimumPacketSize = _config.MinimumPacketSize;
 
-                    List<OptionItem> options = new List<OptionItem>();
+                    var options = new List<OptionItem>();
                     foreach(OptionConfiguration optionConfiguration in _config.Options)
                     {
                         options.Add(optionConfiguration.ConstructOptionItem());
                     }
                     _server.Options = options;
 
-                    List<ReservationItem> reservations = new List<ReservationItem>();
+                    var reservations = new List<ReservationItem>();
                     foreach(ReservationConfiguration reservationConfiguration in _config.Reservations)
                     {
                         reservations.Add(reservationConfiguration.ConstructReservationItem());
@@ -83,31 +81,33 @@ public class DHCPServerResurrector : IDisposable
                 }
             }
         }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
-    private void server_OnStatusChange(object? sender, DHCPStopEventArgs? e)
+    private void server_OnStatusChange(IDHCPServer server, DHCPStopEventArgs? e)
     {
-        if(sender is DHCPServer server)
+        if(server.Active)
         {
-            if(server.Active)
+            //Log(EventLogEntryType.Information, string.Format("{0} transfers in progress", server.ActiveTransfers));
+        }
+        else
+        {
+            if(e != null && e.Reason != null)
             {
-                //Log(EventLogEntryType.Information, string.Format("{0} transfers in progress", server.ActiveTransfers));
+                //Log(EventLogEntryType.Error, $"Stopped, reason: {e.Reason}");
+                _logger.LogError($"{_config.Name} : Stopped, reason: {e.Reason}");
             }
-            else
-            {
-                if(e!=null && e.Reason != null)
-                {
-                    //Log(EventLogEntryType.Error, $"Stopped, reason: {e.Reason}");
-                    _logger.LogError($"{_config.Name} : Stopped, reason: {e.Reason}");
-                }
-                CleanupAndRetry();
-            }
+            CleanupAndRetry();
         }
     }
 
     private void CleanupAndRetry()
     {
-        lock(_lock)
+        _semaphore.Wait();
+        try
         {
             if(!_disposed)
             {
@@ -122,13 +122,18 @@ public class DHCPServerResurrector : IDisposable
                 _retryTimer.Change(RetryTime, Timeout.Infinite);
             }
         }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
     protected void Dispose(bool disposing)
     {
         if(disposing)
         {
-            lock(_lock)
+            _semaphore.Wait();
+            try
             {
                 if(!_disposed)
                 {
@@ -144,6 +149,10 @@ public class DHCPServerResurrector : IDisposable
                         _server = null;
                     }
                 }
+            }
+            finally
+            {
+                _semaphore.Dispose();
             }
         }
     }

@@ -1,6 +1,6 @@
-using GitHub.JPMikkers.DHCP;
+using DHCP.Server.Library;
 
-namespace Tests;
+namespace DHCP.Server.Tests;
 
 [TestClass]
 public class UnitTests
@@ -25,7 +25,7 @@ public class UnitTests
     [DataRow(new byte[] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF }, "", "0123456789ABCDEF")]
     [DataRow(new byte[] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF }, "-", "01-23-45-67-89-AB-CD-EF")]
     [DataRow(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF, 0x42 }, "_", "DE_AD_BE_EF_42")]
-    [DataRow(new byte[] { 0xFE, 0xED, 0xC0, 0xDE }, " ", "FE ED C0 DE" )]
+    [DataRow(new byte[] { 0xFE, 0xED, 0xC0, 0xDE }, " ", "FE ED C0 DE")]
     public void TestBytesToHexString(byte[] input, string separator, string expectedOutput)
     {
         var result = Utils.BytesToHexString(input, separator);

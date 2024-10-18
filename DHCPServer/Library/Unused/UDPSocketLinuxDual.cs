@@ -1,14 +1,10 @@
-#if NEVER       // THIS WAS AN EXPERIMENT.
-using System;
+#if NEVER // THIS WAS AN EXPERIMENT.
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class UDPSocketLinuxDual : IUDPSocket
 {
@@ -27,15 +23,7 @@ public class UDPSocketLinuxDual : IUDPSocket
     private readonly Socket _socket;                            // The active socket
     private readonly int _maxPacketSize;                        // size of packets we'll try to receive
 
-    private readonly IPEndPoint _localEndPoint;
-
-    public IPEndPoint LocalEndPoint
-    {
-        get
-        {
-            return _localEndPoint;
-        }
-    }
+    public IPEndPoint LocalEndPoint { get; }
 
     public UDPSocketLinuxDual(IPEndPoint localEndPoint, int maxPacketSize, bool dontFragment, short ttl)
     {
@@ -84,7 +72,7 @@ public class UDPSocketLinuxDual : IUDPSocket
             _socket.Ttl = ttl;
         }
         _socket.Bind(localEndPoint);
-        _localEndPoint = (_socket.LocalEndPoint as IPEndPoint) ?? localEndPoint;
+        LocalEndPoint = (_socket.LocalEndPoint as IPEndPoint) ?? localEndPoint;
 
         //try
         //{

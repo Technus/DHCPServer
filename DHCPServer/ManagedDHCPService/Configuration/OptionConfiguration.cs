@@ -1,11 +1,10 @@
-﻿using GitHub.JPMikkers.DHCP;
-using System;
+﻿using DHCP.Server.Library;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
-[Serializable()]
+[Serializable]
 [XmlInclude(typeof(OptionConfigurationTFTPServerName))]
 [XmlInclude(typeof(OptionConfigurationBootFileName))]
 [XmlInclude(typeof(OptionConfigurationVendorSpecificInformation))]

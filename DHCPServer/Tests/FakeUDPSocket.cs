@@ -1,8 +1,8 @@
-﻿using GitHub.JPMikkers.DHCP;
+﻿using DHCP.Server.Library;
 using System.Net;
 using System.Threading.Channels;
 
-namespace Tests;
+namespace DHCP.Server.Tests;
 
 public class FakeUDPSocket : IUDPSocket
 {
@@ -36,7 +36,7 @@ public class FakeUDPSocket : IUDPSocket
 
     public async Task Send(IPEndPoint endPoint, ReadOnlyMemory<byte> msg, CancellationToken cancellationToken)
     {
-        await _serverToClientChannel.Writer.WriteAsync((endPoint, msg),cancellationToken);
+        await _serverToClientChannel.Writer.WriteAsync((endPoint, msg), cancellationToken);
     }
 
     public void Dispose()

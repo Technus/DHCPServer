@@ -1,192 +1,192 @@
+using DHCP.Server.Service.Configuration;
 using System.Reflection;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service;
+
+public partial class FormConfigureOverview : Form
 {
-    public partial class FormConfigureOverview : Form
+    private readonly string _configurationPath;
+    private readonly DHCPServerConfigurationList _configurationList;
+
+    public FormConfigureOverview(string configurationPath)
     {
-        private readonly string _configurationPath;
-        private readonly DHCPServerConfigurationList _configurationList;
+        InitializeComponent();
+        _configurationPath = configurationPath;
+        _configurationList = DHCPServerConfigurationList.Read(_configurationPath);
+        dataGridView1.AutoGenerateColumns = false;
+        dataGridView1.DataSource = _configurationList;
+        UpdateButtonStatus();
+    }
 
-        public FormConfigureOverview(string configurationPath)
+    private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+    {
+        if((dataGridView1.Rows[e.RowIndex].DataBoundItem != null) &&
+            (dataGridView1.Columns[e.ColumnIndex].DataPropertyName.Contains(".")))
         {
-            InitializeComponent();
-            _configurationPath = configurationPath;
-            _configurationList = DHCPServerConfigurationList.Read(_configurationPath);
-            dataGridView1.AutoGenerateColumns = false;
-            dataGridView1.DataSource = _configurationList;
-            UpdateButtonStatus();
+            e.Value = BindProperty(dataGridView1.Rows[e.RowIndex].DataBoundItem,
+                   dataGridView1.Columns[e.ColumnIndex].DataPropertyName);
         }
+        // modify row selection color to LightBlue:
+        e.CellStyle.SelectionBackColor = Color.LightBlue;
+        e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
+    }
 
-        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+    private string BindProperty(object property, string propertyName)
+    {
+        var retValue = "";
+
+        if(propertyName.Contains('.'))
         {
-            if((dataGridView1.Rows[e.RowIndex].DataBoundItem != null) &&
-                (dataGridView1.Columns[e.ColumnIndex].DataPropertyName.Contains(".")))
+            PropertyInfo[] arrayProperties;
+            string leftPropertyName;
+
+            leftPropertyName = propertyName.Substring(0, propertyName.IndexOf("."));
+            arrayProperties = property.GetType().GetProperties();
+
+            foreach(var propertyInfo in arrayProperties)
             {
-                e.Value = BindProperty(dataGridView1.Rows[e.RowIndex].DataBoundItem,
-                       dataGridView1.Columns[e.ColumnIndex].DataPropertyName);
-            }
-            // modify row selection color to LightBlue:
-            e.CellStyle.SelectionBackColor = Color.LightBlue;
-            e.CellStyle.SelectionForeColor = e.CellStyle.ForeColor;
-        }
-
-        private string BindProperty(object property, string propertyName)
-        {
-            var retValue = "";
-
-            if(propertyName.Contains('.'))
-            {
-                PropertyInfo[] arrayProperties;
-                string leftPropertyName;
-
-                leftPropertyName = propertyName.Substring(0, propertyName.IndexOf("."));
-                arrayProperties = property.GetType().GetProperties();
-
-                foreach(var propertyInfo in arrayProperties)
+                if(propertyInfo.Name == leftPropertyName)
                 {
-                    if(propertyInfo.Name == leftPropertyName)
-                    {
-                        retValue = BindProperty(
-                          propertyInfo.GetValue(property, null),
-                          propertyName.Substring(propertyName.IndexOf(".") + 1));
-                        break;
-                    }
+                    retValue = BindProperty(
+                      propertyInfo.GetValue(property, null),
+                      propertyName.Substring(propertyName.IndexOf(".") + 1));
+                    break;
                 }
             }
-            else
-            {
-                Type propertyType;
-                PropertyInfo propertyInfo;
+        }
+        else
+        {
+            Type propertyType;
+            PropertyInfo propertyInfo;
 
-                propertyType = property.GetType();
-                propertyInfo = propertyType.GetProperty(propertyName);
-                retValue = propertyInfo.GetValue(property, null).ToString();
-            }
-
-            return retValue;
+            propertyType = property.GetType();
+            propertyInfo = propertyType.GetProperty(propertyName);
+            retValue = propertyInfo.GetValue(property, null).ToString();
         }
 
-        private void buttonAdd_Click(object sender, EventArgs e)
+        return retValue;
+    }
+
+    private void buttonAdd_Click(object sender, EventArgs e)
+    {
+        var result = EditConfiguration(-1, new DHCPServerConfiguration());
+        if(result != null)
         {
-            var result = EditConfiguration(-1, new DHCPServerConfiguration());
+            _configurationList.Add(result);
+            SelectRow(_configurationList.Count - 1);
+            UpdateButtonStatus();
+        }
+    }
+
+    private void buttonRemove_Click(object sender, EventArgs e)
+    {
+        var rowsToRemove = new List<int>();
+        foreach(DataGridViewRow row in dataGridView1.SelectedRows)
+        {
+            rowsToRemove.Add(row.Index);
+        }
+        rowsToRemove.Sort();
+        rowsToRemove.Reverse();
+
+        var currentIndex = dataGridView1.CurrentRow.Index;
+
+        foreach(var x in rowsToRemove)
+        {
+            if(currentIndex == x && currentIndex > 0)
+            {
+                currentIndex--;
+                SelectRow(currentIndex);
+            }
+            _configurationList.RemoveAt(x);
+        }
+        UpdateButtonStatus();
+    }
+
+    private void UpdateButtonStatus()
+    {
+        buttonRemove.Enabled = dataGridView1.Rows.Count > 0;
+        buttonEdit.Enabled = dataGridView1.SelectedRows.Count > 0;
+    }
+
+    private void dataGridView1_SelectionChanged(object sender, EventArgs e)
+    {
+        UpdateButtonStatus();
+    }
+
+    private void buttonEdit_Click(object sender, EventArgs e)
+    {
+        EditConfiguration(dataGridView1.CurrentRow.Index);
+    }
+
+    private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+    {
+        EditConfiguration(e.RowIndex);
+    }
+
+    private void buttonOK_Click(object sender, EventArgs e)
+    {
+        _configurationList.Write(_configurationPath);
+    }
+
+    private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+    {
+        //if (dataGridView1.Columns[e.ColumnIndex] == ColumnRootPath)
+        //{
+        //    System.Diagnostics.Process.Start(m_ConfigurationList[e.RowIndex].RootPath);
+        //}
+    }
+
+    private void SelectRow(int index)
+    {
+        if(index >= 0 && index < dataGridView1.Rows.Count)
+        {
+            dataGridView1.ClearSelection();
+            var rowToSelect = dataGridView1.Rows[index];
+            rowToSelect.Selected = true;
+            rowToSelect.Cells[0].Selected = true;
+            dataGridView1.CurrentCell = rowToSelect.Cells[0];
+        }
+    }
+
+    private void EditConfiguration(int index)
+    {
+        if(index >= 0 && index < _configurationList.Count)
+        {
+            var result = EditConfiguration(index, _configurationList[index]);
             if(result != null)
             {
-                _configurationList.Add(result);
-                SelectRow(_configurationList.Count - 1);
-                UpdateButtonStatus();
+                _configurationList.Insert(index, result);
+                _configurationList.RemoveAt(index + 1);
             }
         }
+    }
 
-        private void buttonRemove_Click(object sender, EventArgs e)
+    private bool ConfigurationCollides(int index, DHCPServerConfiguration config)
+    {
+        for(var t = 0; t < _configurationList.Count; t++)
         {
-            var rowsToRemove = new List<int>();
-            foreach(DataGridViewRow row in dataGridView1.SelectedRows)
+            if(t != index && config.Address == _configurationList[t].Address)
             {
-                rowsToRemove.Add(row.Index);
-            }
-            rowsToRemove.Sort();
-            rowsToRemove.Reverse();
-
-            var currentIndex = dataGridView1.CurrentRow.Index;
-
-            foreach(var x in rowsToRemove)
-            {
-                if(currentIndex == x && currentIndex > 0)
-                {
-                    currentIndex--;
-                    SelectRow(currentIndex);
-                }
-                _configurationList.RemoveAt(x);
-            }
-            UpdateButtonStatus();
-        }
-
-        private void UpdateButtonStatus()
-        {
-            buttonRemove.Enabled = dataGridView1.Rows.Count > 0;
-            buttonEdit.Enabled = dataGridView1.SelectedRows.Count > 0;
-        }
-
-        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        {
-            UpdateButtonStatus();
-        }
-
-        private void buttonEdit_Click(object sender, EventArgs e)
-        {
-            EditConfiguration(dataGridView1.CurrentRow.Index);
-        }
-
-        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            EditConfiguration(e.RowIndex);
-        }
-
-        private void buttonOK_Click(object sender, EventArgs e)
-        {
-            _configurationList.Write(_configurationPath);
-        }
-
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            //if (dataGridView1.Columns[e.ColumnIndex] == ColumnRootPath)
-            //{
-            //    System.Diagnostics.Process.Start(m_ConfigurationList[e.RowIndex].RootPath);
-            //}
-        }
-
-        private void SelectRow(int index)
-        {
-            if(index >= 0 && index < dataGridView1.Rows.Count)
-            {
-                dataGridView1.ClearSelection();
-                var rowToSelect = dataGridView1.Rows[index];
-                rowToSelect.Selected = true;
-                rowToSelect.Cells[0].Selected = true;
-                dataGridView1.CurrentCell = rowToSelect.Cells[0];
+                System.Diagnostics.Debug.WriteLine($"item {t} collides with {index}");
+                return true;
             }
         }
+        return false;
+    }
 
-        private void EditConfiguration(int index)
+    private DHCPServerConfiguration EditConfiguration(int index, DHCPServerConfiguration input)
+    {
+        var f = new FormSettings();
+        f.Configuration = input;
+
+        var dialogResult = f.ShowDialog(this);
+
+        while(dialogResult == DialogResult.OK && ConfigurationCollides(index, f.Configuration))
         {
-            if(index >= 0 && index < _configurationList.Count)
-            {
-                var result = EditConfiguration(index, _configurationList[index]);
-                if(result != null)
-                {
-                    _configurationList.Insert(index, result);
-                    _configurationList.RemoveAt(index + 1);
-                }
-            }
+            MessageBox.Show($"There already is a DHCP server configuration for address {f.Configuration.Address}.\r\nPlease select another address.", "Validation error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            dialogResult = f.ShowDialog(this);
         }
 
-        private bool ConfigurationCollides(int index, DHCPServerConfiguration config)
-        {
-            for(var t = 0; t < _configurationList.Count; t++)
-            {
-                if(t != index && config.Address == _configurationList[t].Address)
-                {
-                    System.Diagnostics.Debug.WriteLine($"item {t} collides with {index}");
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private DHCPServerConfiguration EditConfiguration(int index, DHCPServerConfiguration input)
-        {
-            var f = new FormSettings();
-            f.Configuration = input;
-
-            var dialogResult = f.ShowDialog(this);
-
-            while(dialogResult == DialogResult.OK && ConfigurationCollides(index, f.Configuration))
-            {
-                MessageBox.Show($"There already is a DHCP server configuration for address {f.Configuration.Address}.\r\nPlease select another address.", "Validation error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                dialogResult = f.ShowDialog(this);
-            }
-
-            return dialogResult == DialogResult.OK ? f.Configuration : null;
-        }
+        return dialogResult == DialogResult.OK ? f.Configuration : null;
     }
 }

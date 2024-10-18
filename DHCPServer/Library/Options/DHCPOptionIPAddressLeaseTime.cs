@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionIPAddressLeaseTime : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionIPAddressLeaseTime : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionIPAddressLeaseTime();
-        if(s.Length != 4) 
+        if(s.Length != 4)
             throw new IOException("Invalid DHCP option length");
         result.LeaseTime = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
         return result;

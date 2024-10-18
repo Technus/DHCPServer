@@ -1,11 +1,10 @@
-using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
+using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using System.Net;
-using System.Net.Sockets;
 
-namespace Tests;
+namespace DHCP.Server.Tests;
 
 [TestClass]
 public class DHCPServerUnitTests

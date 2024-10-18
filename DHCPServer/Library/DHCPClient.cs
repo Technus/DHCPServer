@@ -1,8 +1,8 @@
-using GitHub.JPMikkers.DHCP.Options;
+using DHCP.Server.Library.Options;
 using System.Net;
 using System.Xml.Serialization;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 [Serializable]
 public sealed class DHCPClient : IEquatable<DHCPClient>
@@ -37,12 +37,12 @@ public sealed class DHCPClient : IEquatable<DHCPClient>
     public TimeSpan LeaseDuration
     {
         get => _leaseDuration;
-        set => _leaseDuration = Utils.SanitizeTimeSpan(value);
+        set => _leaseDuration = value.SanitizeTimeSpan();
     }
 
     public DateTime LeaseEndTime
     {
-        get => Utils.IsInfiniteTimeSpan(_leaseDuration) ? DateTime.MaxValue : (_leaseStartTime + _leaseDuration);
+        get => _leaseDuration.IsInfiniteTimeSpan() ? DateTime.MaxValue : _leaseStartTime + _leaseDuration;
         set => _leaseDuration = value >= DateTime.MaxValue ? Utils.InfiniteTimeSpan : value - _leaseStartTime;
     }
 
@@ -115,7 +115,7 @@ public sealed class DHCPClient : IEquatable<DHCPClient>
         {
             var result = 0;
             foreach(var b in Identifier)
-                result = (result * 31) ^ b;
+                result = result * 31 ^ b;
             return result;
         }
     }

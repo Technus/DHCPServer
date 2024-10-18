@@ -1,16 +1,15 @@
 ﻿using System.Xml.Serialization;
 
-namespace DHCPServerApp
-{
-    [Serializable]
-    public abstract class OptionConfigurationAddresses : OptionConfiguration
-    {
-        [XmlArrayItem("Address")]
-        public List<XmlSerializableIPAddress> Addresses { get; set; }
+namespace DHCP.Server.Service.Configuration;
 
-        protected OptionConfigurationAddresses()
-        {
-            Addresses = [];
-        }
+[Serializable]
+public abstract class OptionConfigurationAddresses : OptionConfiguration
+{
+    [XmlArrayItem("Address")]
+    public List<XmlSerializableIPAddress> Addresses { get; set; }
+
+    protected OptionConfigurationAddresses()
+    {
+        Addresses = [];
     }
 }

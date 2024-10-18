@@ -1,14 +1,11 @@
-﻿using System;
-using System.ComponentModel;
-using System.IO;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
-[Serializable()]
+[Serializable]
 public class DHCPServerConfigurationList : List<DHCPServerConfiguration>
 {
-    private static readonly XmlSerializer s_serializer = new XmlSerializer(typeof(DHCPServerConfigurationList));
+    private static readonly XmlSerializer s_serializer = new(typeof(DHCPServerConfigurationList));
 
     public static DHCPServerConfigurationList Read(string file)
     {
@@ -16,10 +13,8 @@ public class DHCPServerConfigurationList : List<DHCPServerConfiguration>
 
         if(File.Exists(file))
         {
-            using(Stream s = File.OpenRead(file))
-            {
-                result = (s_serializer.Deserialize(s) as DHCPServerConfigurationList) ?? [];
-            }
+            using var s = File.OpenRead(file);
+            result = s_serializer.Deserialize(s) as DHCPServerConfigurationList ?? [];
         }
         else
         {
@@ -38,9 +33,7 @@ public class DHCPServerConfigurationList : List<DHCPServerConfiguration>
             Directory.CreateDirectory(dirName);
         }
 
-        using(Stream s = File.Open(file, FileMode.Create))
-        {
-            s_serializer.Serialize(s, this);
-        }
+        using var s = File.Open(file, FileMode.Create);
+        s_serializer.Serialize(s, this);
     }
 }

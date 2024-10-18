@@ -1,38 +1,38 @@
-﻿using System.Diagnostics;
+﻿using DHCP.Server.Service.Configuration;
+using System.Diagnostics;
 using System.ServiceProcess;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service;
+
+public partial class DHCPService : ServiceBase
 {
-    public partial class DHCPService : ServiceBase
+    private readonly EventLog _eventLog;
+    private DHCPServerConfigurationList _configuration;
+    private List<DHCPServerResurrector> _servers;
+
+    public DHCPService()
     {
-        private readonly EventLog _eventLog;
-        private DHCPServerConfigurationList _configuration;
-        private List<DHCPServerResurrector> _servers;
+        InitializeComponent();
+        _eventLog = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
+    }
 
-        public DHCPService()
+    protected override void OnStart(string[] args)
+    {
+        _configuration = DHCPServerConfigurationList.Read(Program.GetConfigurationPath());
+        _servers = [];
+
+        foreach(var config in _configuration)
         {
-            InitializeComponent();
-            _eventLog = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
+            _servers.Add(new DHCPServerResurrector(config, _eventLog));
         }
+    }
 
-        protected override void OnStart(string[] args)
+    protected override void OnStop()
+    {
+        foreach(var server in _servers)
         {
-            _configuration = DHCPServerConfigurationList.Read(Program.GetConfigurationPath());
-            _servers = [];
-
-            foreach(var config in _configuration)
-            {
-                _servers.Add(new DHCPServerResurrector(config, _eventLog));
-            }
+            server.Dispose();
         }
-
-        protected override void OnStop()
-        {
-            foreach(var server in _servers)
-            {
-                server.Dispose();
-            }
-            _servers.Clear();
-        }
+        _servers.Clear();
     }
 }

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
 [Serializable()]
 public abstract class OptionConfigurationAddresses : OptionConfiguration
@@ -12,6 +10,6 @@ public abstract class OptionConfigurationAddresses : OptionConfiguration
 
     public OptionConfigurationAddresses()
     {
-        Addresses = new List<XmlSerializableIPAddress>();
+        Addresses = [];
     }
 }

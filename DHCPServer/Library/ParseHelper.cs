@@ -2,7 +2,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public static class ParseHelper
 {
@@ -76,7 +76,7 @@ public static class ParseHelper
         var nul = s.IndexOf((byte)0);
         if(nul is 0)
             return string.Empty;
-        return Encoding.ASCII.GetString(nul is -1 ? s : s[..(nul-1)]);
+        return Encoding.ASCII.GetString(nul is -1 ? s : s[..(nul - 1)]);
     }
 
     public static string ReadZString(Stream s)
@@ -139,7 +139,7 @@ public static class ParseHelper
         using var tw = new StreamWriter(s, Encoding.ASCII);
         tw.Write(msg);
         tw.Flush();
-        if(zeroTerminated) 
+        if(zeroTerminated)
             s.WriteByte(0);
     }
 }

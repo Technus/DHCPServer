@@ -4,74 +4,73 @@ using System.Configuration.Install;
 using System.Diagnostics;
 
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service;
+
+[RunInstaller(true)]
+public partial class ProjectInstaller : Installer
 {
-    [RunInstaller(true)]
-    public partial class ProjectInstaller : Installer
+    public ProjectInstaller()
     {
-        public ProjectInstaller()
+        InitializeComponent();
+    }
+
+    protected override void OnBeforeInstall(IDictionary savedState)
+    {
+        Trace.WriteLine("Creating DHCP service log");
+
+        try
         {
-            InitializeComponent();
+            //EventLogPermission eventLogPermission = new EventLogPermission(EventLogPermissionAccess.Administer, ".");
+            //eventLogPermission.PermitOnly();
+
+            if(!EventLog.SourceExists(Program.CustomEventSource))
+            {
+                EventLog.CreateEventSource(Program.CustomEventSource, Program.CustomEventLog);
+            }
+            // write something to the event log, or else the EventLog component in the UI
+            // won't fire the updating events. I know, it sucks.
+            var tmp = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
+            tmp.WriteEntry("Installation complete");
+            tmp.MaximumKilobytes = 16000;   // value MUST be a factor of 64
+            tmp.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 7);
+            tmp.Close();
+        }
+        catch(Exception ex)
+        {
+            Trace.WriteLine($"Exception: {ex}");
         }
 
-        protected override void OnBeforeInstall(IDictionary savedState)
+        Context.Parameters["assemblypath"] = $"\"{Context.Parameters["assemblypath"]}\" {"/service"}";
+        base.OnBeforeInstall(savedState);
+    }
+
+    protected override void OnBeforeUninstall(IDictionary savedState)
+    {
+        Context.Parameters["assemblypath"] = $"\"{Context.Parameters["assemblypath"]}\" {"/service"}";
+        base.OnBeforeUninstall(savedState);
+    }
+
+    protected override void OnAfterUninstall(IDictionary savedState)
+    {
+        Trace.WriteLine("Removing DHCP service log");
+
+        try
         {
-            Trace.WriteLine("Creating DHCP service log");
-
-            try
+            if(EventLog.SourceExists(Program.CustomEventSource))
             {
-                //EventLogPermission eventLogPermission = new EventLogPermission(EventLogPermissionAccess.Administer, ".");
-                //eventLogPermission.PermitOnly();
-
-                if(!EventLog.SourceExists(Program.CustomEventSource))
-                {
-                    EventLog.CreateEventSource(Program.CustomEventSource, Program.CustomEventLog);
-                }
-                // write something to the event log, or else the EventLog component in the UI
-                // won't fire the updating events. I know, it sucks.
-                var tmp = new EventLog(Program.CustomEventLog, ".", Program.CustomEventSource);
-                tmp.WriteEntry("Installation complete");
-                tmp.MaximumKilobytes = 16000;   // value MUST be a factor of 64
-                tmp.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 7);
-                tmp.Close();
-            }
-            catch(Exception ex)
-            {
-                Trace.WriteLine($"Exception: {ex}");
+                EventLog.DeleteEventSource(Program.CustomEventSource);
             }
 
-            Context.Parameters["assemblypath"] = $"\"{Context.Parameters["assemblypath"]}\" {"/service"}";
-            base.OnBeforeInstall(savedState);
+            if(EventLog.Exists(Program.CustomEventLog))
+            {
+                EventLog.Delete(Program.CustomEventLog);
+            }
+        }
+        catch(Exception ex)
+        {
+            Trace.WriteLine($"Exception: {ex}");
         }
 
-        protected override void OnBeforeUninstall(IDictionary savedState)
-        {
-            Context.Parameters["assemblypath"] = $"\"{Context.Parameters["assemblypath"]}\" {"/service"}";
-            base.OnBeforeUninstall(savedState);
-        }
-
-        protected override void OnAfterUninstall(IDictionary savedState)
-        {
-            Trace.WriteLine("Removing DHCP service log");
-
-            try
-            {
-                if(EventLog.SourceExists(Program.CustomEventSource))
-                {
-                    EventLog.DeleteEventSource(Program.CustomEventSource);
-                }
-
-                if(EventLog.Exists(Program.CustomEventLog))
-                {
-                    EventLog.Delete(Program.CustomEventLog);
-                }
-            }
-            catch(Exception ex)
-            {
-                Trace.WriteLine($"Exception: {ex}");
-            }
-
-            base.OnAfterUninstall(savedState);
-        }
+        base.OnAfterUninstall(savedState);
     }
 }

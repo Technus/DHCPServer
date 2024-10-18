@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionRelayAgentInformation : DHCPOptionBase
 {
@@ -31,7 +31,7 @@ public class DHCPOptionRelayAgentInformation : DHCPOptionBase
     {
         var result = new DHCPOptionRelayAgentInformation();
         result.Data = new byte[s.Length];
-        if(s.Read(result.Data, 0, result.Data.Length)!= result.Data.Length)
+        if(s.Read(result.Data, 0, result.Data.Length) != result.Data.Length)
             throw new IOException();
 
         // subOptionStream

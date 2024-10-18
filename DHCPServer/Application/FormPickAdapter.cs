@@ -2,70 +2,70 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service;
+
+public partial class FormPickAdapter : Form
 {
-    public partial class FormPickAdapter : Form
+    public IPAddress Address { get; private set; }
+
+    public FormPickAdapter()
     {
-        public IPAddress Address { get; private set; } = IPAddress.Loopback;
-
-        public FormPickAdapter()
+        Address = IPAddress.Loopback;
+        InitializeComponent();
+        var computerProperties = IPGlobalProperties.GetIPGlobalProperties();//todo why?
+        var nics = NetworkInterface.GetAllNetworkInterfaces();
+        comboBoxAdapter.DisplayMember = "Description";
+        foreach(var adapter in nics)
         {
-            InitializeComponent();
-            var computerProperties = IPGlobalProperties.GetIPGlobalProperties();//todo why?
-            var nics = NetworkInterface.GetAllNetworkInterfaces();
-            comboBoxAdapter.DisplayMember = "Description";
-            foreach(var adapter in nics)
-            {
-                comboBoxAdapter.Items.Add(adapter);
-            }
-            comboBoxAdapter.SelectedIndex = 0;
+            comboBoxAdapter.Items.Add(adapter);
         }
+        comboBoxAdapter.SelectedIndex = 0;
+    }
 
-        private void comboBoxAdapter_SelectedIndexChanged(object sender, EventArgs e)
+    private void comboBoxAdapter_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if(comboBoxAdapter.SelectedIndex >= 0 && comboBoxAdapter.SelectedIndex < comboBoxAdapter.Items.Count)
         {
-            if(comboBoxAdapter.SelectedIndex >= 0 && comboBoxAdapter.SelectedIndex < comboBoxAdapter.Items.Count)
+            comboBoxUnicast.SelectedIndex = -1;
+            comboBoxUnicast.Items.Clear();
+
+            try
             {
-                comboBoxUnicast.SelectedIndex = -1;
-                comboBoxUnicast.Items.Clear();
+                var adapter = (NetworkInterface)comboBoxAdapter.SelectedItem;
 
-                try
+                foreach(var uni in adapter.GetIPProperties().UnicastAddresses)
                 {
-                    var adapter = (NetworkInterface)comboBoxAdapter.SelectedItem;
-
-                    foreach(var uni in adapter.GetIPProperties().UnicastAddresses)
+                    if(uni.Address.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        if(uni.Address.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            comboBoxUnicast.Items.Add(uni.Address);
-                        }
-                    }
-
-                    foreach(var uni in adapter.GetIPProperties().UnicastAddresses)
-                    {
-                        if(uni.Address.AddressFamily == AddressFamily.InterNetworkV6)
-                        {
-                            comboBoxUnicast.Items.Add(uni.Address);
-                        }
+                        comboBoxUnicast.Items.Add(uni.Address);
                     }
                 }
-                catch
-                {
-                    //O OK
-                }
 
-                if(comboBoxUnicast.Items.Count > 0)
+                foreach(var uni in adapter.GetIPProperties().UnicastAddresses)
                 {
-                    comboBoxUnicast.SelectedIndex = 0;
+                    if(uni.Address.AddressFamily == AddressFamily.InterNetworkV6)
+                    {
+                        comboBoxUnicast.Items.Add(uni.Address);
+                    }
                 }
+            }
+            catch
+            {
+                //O OK
+            }
+
+            if(comboBoxUnicast.Items.Count > 0)
+            {
+                comboBoxUnicast.SelectedIndex = 0;
             }
         }
+    }
 
-        private void buttonOk_Click(object sender, EventArgs e)
+    private void buttonOk_Click(object sender, EventArgs e)
+    {
+        if(comboBoxUnicast.SelectedIndex >= 0)
         {
-            if(comboBoxUnicast.SelectedIndex >= 0)
-            {
-                Address = (IPAddress)comboBoxUnicast.SelectedItem;
-            }
+            Address = (IPAddress)comboBoxUnicast.SelectedItem;
         }
     }
 }

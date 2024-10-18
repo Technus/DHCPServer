@@ -1,21 +1,20 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationGeneric : OptionConfiguration
 {
-    [Serializable]
-    public class OptionConfigurationGeneric : OptionConfiguration
+    public int Option;
+    public string Data;
+
+    public OptionConfigurationGeneric()
     {
-        public int Option;
-        public string Data;
+    }
 
-        public OptionConfigurationGeneric()
-        {
-        }
-
-        protected override IDHCPOption ConstructDHCPOption()
-        {
-            return new DHCPOptionGeneric((TDHCPOption)Option, Utils.HexStringToBytes(Data));
-        }
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        return new DHCPOptionGeneric((TDHCPOption)Option, Utils.HexStringToBytes(Data));
     }
 }

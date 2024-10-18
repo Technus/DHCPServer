@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace GitHub.JPMikkers.DHCP.Options;
+namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionSubnetMask : DHCPOptionBase
 {

@@ -1,16 +1,16 @@
-﻿using GitHub.JPMikkers.DHCP;
-using System;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
-[Serializable()]
+[Serializable]
 public class OptionConfigurationVendorSpecificInformation : OptionConfiguration
 {
-    public string Information;
+    public string Information {  get; set; }
 
     public OptionConfigurationVendorSpecificInformation()
     {
-        Information = "";
+        Information = string.Empty;
     }
 
     protected override IDHCPOption ConstructDHCPOption()

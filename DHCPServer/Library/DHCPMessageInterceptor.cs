@@ -1,4 +1,4 @@
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public interface IDHCPMessageInterceptor
 {

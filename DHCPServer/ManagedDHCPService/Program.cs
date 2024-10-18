@@ -1,4 +1,4 @@
-using ManagedDHCPService;
+using DHCP.Server.Worker;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Logging.EventLog;
 

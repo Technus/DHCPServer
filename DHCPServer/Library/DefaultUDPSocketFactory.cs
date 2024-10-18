@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Runtime.InteropServices;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class DefaultUDPSocketFactory : IUDPSocketFactory
 {
@@ -11,7 +11,7 @@ public class DefaultUDPSocketFactory : IUDPSocketFactory
 
     public DefaultUDPSocketFactory(ILogger? logger)
     {
-        _logger = logger ?? NullLogger.Instance; 
+        _logger = logger ?? NullLogger.Instance;
     }
 
     public IUDPSocket Create(IPEndPoint localEndPoint, int packetSize, bool dontFragment, short ttl)

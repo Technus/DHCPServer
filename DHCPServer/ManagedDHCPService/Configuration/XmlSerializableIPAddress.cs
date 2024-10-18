@@ -1,18 +1,18 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
-[Serializable()]
+[Serializable]
 public class XmlSerializableIPAddress : IXmlSerializable
 {
-    public IPAddress Address { get; set; } = IPAddress.None;
+    public IPAddress Address { get; set; }
 
     public XmlSerializableIPAddress()
     {
+        Address = IPAddress.None;
     }
 
     public XmlSchema? GetSchema()

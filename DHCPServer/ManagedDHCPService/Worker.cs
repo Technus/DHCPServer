@@ -1,12 +1,12 @@
-using GitHub.JPMikkers.DHCP;
+using DHCP.Server.Worker.Configuration;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker;
 
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private DHCPServerConfigurationList _configuration = new();
-    private List<DHCPServerResurrector> _servers = new();
+    private List<DHCPServerResurrector> _servers = [];
 
     public Worker(ILogger<Worker> logger)
     {
@@ -15,7 +15,7 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while(!stoppingToken.IsCancellationRequested)
         {
             //_logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             await Task.Delay(1000, stoppingToken);
@@ -44,8 +44,8 @@ public class Worker : BackgroundService
         _logger.LogInformation($"Reading DHCP configuration '{configurationPath}'");
 
         _configuration = DHCPServerConfigurationList.Read(GetConfigurationPath());
-        _servers = new List<DHCPServerResurrector>();
 
+        _servers = [];
         foreach(DHCPServerConfiguration config in _configuration)
         {
             _servers.Add(new DHCPServerResurrector(config, _logger, GetClientInfoPath(config.Name, config.Address)));

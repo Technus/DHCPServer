@@ -2,12 +2,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class AutoPumpQueue<T> : IDisposable
 {
     public delegate void DataDelegate(AutoPumpQueue<T> sender, T data);
-    private readonly SemaphoreSlim _semaphore = new(1,1);
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly ConcurrentQueue<T> _queue = [];
     private readonly ILogger _logger;
     private readonly DataDelegate _dataDelegate;
@@ -33,7 +33,7 @@ public class AutoPumpQueue<T> : IDisposable
                 {
                     _dataDelegate(this, data);
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
                     _logger.LogError(e, "While awaiting Queue.");
                 }

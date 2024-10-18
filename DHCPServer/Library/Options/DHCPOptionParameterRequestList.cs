@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace GitHub.JPMikkers.DHCP.Options;
+namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionParameterRequestList : DHCPOptionBase
 {
@@ -14,7 +14,7 @@ public class DHCPOptionParameterRequestList : DHCPOptionBase
         while(true)
         {
             var c = s.ReadByte();
-            if(c < 0) 
+            if(c < 0)
                 break;
             result.RequestList.Add((TDHCPOption)c);
         }
@@ -45,7 +45,7 @@ public class DHCPOptionParameterRequestList : DHCPOptionBase
             sb.Append(opt.ToString());
             sb.Append(",");
         }
-        if(RequestList.Count > 0) 
+        if(RequestList.Count > 0)
             sb.Remove(sb.Length - 1, 1);
         return $"Option(name=[{OptionType}],value=[{sb}])";
     }

@@ -3,35 +3,34 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class XmlSerializableIPAddress : IXmlSerializable
 {
-    [Serializable]
-    public class XmlSerializableIPAddress : IXmlSerializable
+    public IPAddress Address { get; set; }
+
+    public XmlSerializableIPAddress()
     {
-        public IPAddress Address { get; set; }
+    }
 
-        public XmlSerializableIPAddress()
+    public XmlSchema GetSchema() => null;
+
+    public void ReadXml(XmlReader reader)
+    {
+        // https://www.codeproject.com/Articles/43237/How-to-Implement-IXmlSerializable-Correctly
+        reader.MoveToContent();
+        var isEmptyElement = reader.IsEmptyElement;
+        reader.ReadStartElement();
+        if(!isEmptyElement)
         {
+            Address = IPAddress.Parse(reader.ReadContentAsString());
+            reader.ReadEndElement();
         }
+    }
 
-        public XmlSchema GetSchema() => null;
-
-        public void ReadXml(XmlReader reader)
-        {
-            // https://www.codeproject.com/Articles/43237/How-to-Implement-IXmlSerializable-Correctly
-            reader.MoveToContent();
-            var isEmptyElement = reader.IsEmptyElement;
-            reader.ReadStartElement();
-            if(!isEmptyElement)
-            {
-                Address = IPAddress.Parse(reader.ReadContentAsString());
-                reader.ReadEndElement();
-            }
-        }
-
-        public void WriteXml(XmlWriter writer)
-        {
-            if(Address != null) writer.WriteString(Address.ToString());
-        }
+    public void WriteXml(XmlWriter writer)
+    {
+        if(Address != null) writer.WriteString(Address.ToString());
     }
 }

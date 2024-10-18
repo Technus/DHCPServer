@@ -1,8 +1,8 @@
-using GitHub.JPMikkers.DHCP.Options;
+using DHCP.Server.Library.Options;
 using System.Net;
 using System.Text;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class DHCPMessage
 {
@@ -221,7 +221,7 @@ public class DHCPMessage
         var bootFileNameBuffer = s[i..(i += 128)].ToArray();
 
         // read options magic cookie
-        if(!s[i..(i += 4)].SequenceEqual(s_magicNumber)) 
+        if(!s[i..(i += 4)].SequenceEqual(s_magicNumber))
             throw new IOException();
 
         var optionsBuffer = s[i..].ToArray();
@@ -252,16 +252,16 @@ public class DHCPMessage
         }
     }
 
-    public T? FindOption<T>() where T : DHCPOptionBase => 
+    public T? FindOption<T>() where T : DHCPOptionBase =>
         Options.OfType<T>().FirstOrDefault();
 
-    public IDHCPOption? GetOption(TDHCPOption optionType) => 
+    public IDHCPOption? GetOption(TDHCPOption optionType) =>
         Options.Find((v) => v.OptionType == optionType);
 
     public bool IsRequestedParameter(TDHCPOption optionType)
     {
         var dhcpOptionParameterRequestList = FindOption<DHCPOptionParameterRequestList>();
-        return (dhcpOptionParameterRequestList is not null && dhcpOptionParameterRequestList.RequestList.Contains(optionType));
+        return dhcpOptionParameterRequestList is not null && dhcpOptionParameterRequestList.RequestList.Contains(optionType);
     }
 
     private static void CopyBytes(Stream source, Stream target, int length)
@@ -292,9 +292,9 @@ public class DHCPMessage
             if(i >= s.Length)
                 break;
             var code = s[i++];
-            if(code == (byte)TDHCPOption.End) 
+            if(code == (byte)TDHCPOption.End)
                 break;
-            else if(code != 0) 
+            else if(code != 0)
             {
                 if(i >= s.Length)
                     break;
@@ -319,7 +319,7 @@ public class DHCPMessage
             if(i >= source.Length)
                 break;
             var c = source[i++];
-            if(c == (byte)TDHCPOption.End) 
+            if(c == (byte)TDHCPOption.End)
                 break;
             else if(c != 0)
             {
@@ -386,7 +386,7 @@ public class DHCPMessage
         s.WriteByte((byte)Opcode);
         s.WriteByte((byte)HardwareType);
         s.WriteByte((byte)ClientHardwareAddress.Length);
-        s.WriteByte((byte)Hops);
+        s.WriteByte(Hops);
         ParseHelper.WriteUInt32(s, XID);
         ParseHelper.WriteUInt16(s, Secs);
         ParseHelper.WriteUInt16(s, BroadCast ? (ushort)0x8000 : (ushort)0x0);
@@ -437,19 +437,19 @@ public class DHCPMessage
     {
         var sb = new StringBuilder();
 
-        sb.AppendFormat(    "Opcode (op)                    : {0}\r\n", Opcode);
-        sb.AppendFormat(    "HardwareType (htype)           : {0}\r\n", HardwareType);
-        sb.AppendFormat(    "Hops                           : {0}\r\n", Hops);
-        sb.AppendFormat(    "XID                            : {0}\r\n", XID);
-        sb.AppendFormat(    "Secs                           : {0}\r\n", Secs);
-        sb.AppendFormat(    "BroadCast (flags)              : {0}\r\n", BroadCast);
-        sb.AppendFormat(    "ClientIPAddress (ciaddr)       : {0}\r\n", ClientIPAddress);
-        sb.AppendFormat(    "YourIPAddress (yiaddr)         : {0}\r\n", YourIPAddress);
-        sb.AppendFormat(    "NextServerIPAddress (siaddr)   : {0}\r\n", NextServerIPAddress);
-        sb.AppendFormat(    "RelayAgentIPAddress (giaddr)   : {0}\r\n", RelayAgentIPAddress);
-        sb.AppendFormat(    "ClientHardwareAddress (chaddr) : {0}\r\n", Utils.BytesToHexString(ClientHardwareAddress, "-"));
-        sb.AppendFormat(    "ServerHostName (sname)         : {0}\r\n", ServerHostName);
-        sb.AppendFormat(    "BootFileName (file)            : {0}\r\n", BootFileName);
+        sb.AppendFormat("Opcode (op)                    : {0}\r\n", Opcode);
+        sb.AppendFormat("HardwareType (htype)           : {0}\r\n", HardwareType);
+        sb.AppendFormat("Hops                           : {0}\r\n", Hops);
+        sb.AppendFormat("XID                            : {0}\r\n", XID);
+        sb.AppendFormat("Secs                           : {0}\r\n", Secs);
+        sb.AppendFormat("BroadCast (flags)              : {0}\r\n", BroadCast);
+        sb.AppendFormat("ClientIPAddress (ciaddr)       : {0}\r\n", ClientIPAddress);
+        sb.AppendFormat("YourIPAddress (yiaddr)         : {0}\r\n", YourIPAddress);
+        sb.AppendFormat("NextServerIPAddress (siaddr)   : {0}\r\n", NextServerIPAddress);
+        sb.AppendFormat("RelayAgentIPAddress (giaddr)   : {0}\r\n", RelayAgentIPAddress);
+        sb.AppendFormat("ClientHardwareAddress (chaddr) : {0}\r\n", Utils.BytesToHexString(ClientHardwareAddress, "-"));
+        sb.AppendFormat("ServerHostName (sname)         : {0}\r\n", ServerHostName);
+        sb.AppendFormat("BootFileName (file)            : {0}\r\n", BootFileName);
 
         foreach(IDHCPOption option in Options)
             sb.AppendFormat("Option                         : {0}\r\n", option.ToString());

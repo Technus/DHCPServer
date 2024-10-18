@@ -1,6 +1,6 @@
-﻿using GitHub.JPMikkers.DHCP.Options;
+﻿using DHCP.Server.Library.Options;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public interface IDHCPOption
 {

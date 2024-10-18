@@ -1,7 +1,7 @@
-﻿using GitHub.JPMikkers.DHCP;
+﻿using DHCP.Server.Library;
 using System.Net;
 
-namespace Tests;
+namespace DHCP.Server.Tests;
 
 public class FakeClient
 {

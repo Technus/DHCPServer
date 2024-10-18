@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionMaximumDHCPMessageSize : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionMaximumDHCPMessageSize : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionMaximumDHCPMessageSize();
-        if(s.Length != 2) 
+        if(s.Length != 2)
             throw new IOException("Invalid DHCP option length");
         result.MaxSize = ParseHelper.ReadUInt16(s);
         return result;

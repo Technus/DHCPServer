@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionRenewalTimeValue : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionRenewalTimeValue : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionRenewalTimeValue();
-        if(s.Length != 4) 
+        if(s.Length != 4)
             throw new IOException("Invalid DHCP option length");
         result.TimeSpan = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
         return result;

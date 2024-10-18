@@ -1,7 +1,7 @@
-﻿using GitHub.JPMikkers.DHCP;
+﻿using DHCP.Server.Library;
 using System.Net;
 
-namespace Tests;
+namespace DHCP.Server.Tests;
 
 public class FakeUDPSocketFactory : IUDPSocketFactory
 {
@@ -9,12 +9,12 @@ public class FakeUDPSocketFactory : IUDPSocketFactory
 
     public IUDPSocket Create(IPEndPoint localEndPoint, int packetSize, bool dontFragment, short ttl)
     {
-        UdpSocket = new FakeUDPSocket() 
-        { 
+        UdpSocket = new FakeUDPSocket()
+        {
             LocalEndPoint = localEndPoint,
             PacketSize = packetSize,
-            DontFragment = dontFragment, 
-            Ttl = ttl, 
+            DontFragment = dontFragment,
+            Ttl = ttl,
         };
         return UdpSocket;
     }

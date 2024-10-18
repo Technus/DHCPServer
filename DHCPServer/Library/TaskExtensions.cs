@@ -1,13 +1,13 @@
-﻿namespace GitHub.JPMikkers.DHCP;
+﻿namespace DHCP.Server.Library;
 
 internal static class TaskExtensions
 {
     // see https://devblogs.microsoft.com/pfxteam/tasks-and-unhandled-exceptions/
     public static Task IgnoreExceptions(this Task task)
     {
-        task.ContinueWith(c => 
-        { 
-            var ignored = c.Exception; 
+        task.ContinueWith(c =>
+        {
+            var ignored = c.Exception;
         },
             TaskContinuationOptions.OnlyOnFaulted |
             TaskContinuationOptions.ExecuteSynchronously);  // | TaskContinuationOptions.DetachedFromParent);

@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net;
-using GitHub.JPMikkers.DHCP.Options;
+using DHCP.Server.Library.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class DHCPServer : IDHCPServer
 {
@@ -39,7 +39,7 @@ public class DHCPServer : IDHCPServer
     public TimeSpan LeaseTime
     {
         get => _leaseTime;
-        set => _leaseTime = Utils.SanitizeTimeSpan(value);
+        set => _leaseTime = value.SanitizeTimeSpan();
     }
 
     public int MinimumPacketSize
@@ -110,12 +110,12 @@ public class DHCPServer : IDHCPServer
     {
         try
         {
-            var clientInformation = string.IsNullOrWhiteSpace(_clientInfoPath) ? 
-                new DHCPClientInformation() : 
+            var clientInformation = string.IsNullOrWhiteSpace(_clientInfoPath) ?
+                new DHCPClientInformation() :
                 DHCPClientInformation.Read(_clientInfoPath);
 
             foreach(DHCPClient client in clientInformation.Clients
-                .Where(c => c.State != DHCPClient.TState.Offered && 
+                .Where(c => c.State != DHCPClient.TState.Offered &&
                         IsIPAddressInPoolRange(c.IPAddress))) // Forget offered clients and clients no longer in ip range.
             {
                 _ = _clients.TryAdd(client, client);
@@ -210,7 +210,7 @@ public class DHCPServer : IDHCPServer
             notify = true;
             _cancellationTokenSource.Cancel();
 
-            if(_mainTask!= null)
+            if(_mainTask != null)
             {
                 try
                 {
@@ -239,8 +239,8 @@ public class DHCPServer : IDHCPServer
 
         foreach(var client in _clients.Keys.ToList())
         {
-            if((client.State == DHCPClient.TState.Offered && (DateTime.Now - client.OfferedTime) > OfferExpirationTime) ||
-                (client.State == DHCPClient.TState.Assigned && (DateTime.Now > client.LeaseEndTime)))
+            if(client.State == DHCPClient.TState.Offered && DateTime.Now - client.OfferedTime > OfferExpirationTime ||
+                client.State == DHCPClient.TState.Assigned && DateTime.Now > client.LeaseEndTime)
             {
                 RemoveClient(client);
                 modified = true;
@@ -283,7 +283,7 @@ public class DHCPServer : IDHCPServer
     {
         foreach(var optionItem in Options)
         {
-            if((optionItem.Mode == OptionMode.Force || sourceMsg.IsRequestedParameter(optionItem.Option.OptionType)) && 
+            if((optionItem.Mode == OptionMode.Force || sourceMsg.IsRequestedParameter(optionItem.Option.OptionType)) &&
                 targetMsg.GetOption(optionItem.Option.OptionType) == null)
             {
                 targetMsg.Options.Add(optionItem.Option);
@@ -345,7 +345,7 @@ public class DHCPServer : IDHCPServer
 
         response.Options.Add(new DHCPOptionIPAddressLeaseTime(leaseTime));
         response.Options.Add(new DHCPOptionServerIdentifier(_socket.LocalEndPoint.Address));
-        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask)) 
+        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask))
             response.Options.Add(new DHCPOptionSubnetMask(SubnetMask));
         AppendConfiguredOptions(sourceMsg, response);
         await SendOfferOrAck(sourceMsg, response);
@@ -384,7 +384,7 @@ public class DHCPServer : IDHCPServer
         response.ClientHardwareAddress = sourceMsg.ClientHardwareAddress;
         response.MessageType = TDHCPMessageType.NAK;
         response.Options.Add(new DHCPOptionServerIdentifier(_socket.LocalEndPoint.Address));
-        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask)) 
+        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask))
             response.Options.Add(new DHCPOptionSubnetMask(SubnetMask));
 
         if(!sourceMsg.RelayAgentIPAddress.Equals(IPAddress.Any))
@@ -451,7 +451,7 @@ public class DHCPServer : IDHCPServer
 
         response.Options.Add(new DHCPOptionIPAddressLeaseTime(leaseTime));
         response.Options.Add(new DHCPOptionServerIdentifier(_socket.LocalEndPoint.Address));
-        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask)) 
+        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask))
             response.Options.Add(new DHCPOptionSubnetMask(SubnetMask));
         AppendConfiguredOptions(sourceMsg, response);
         await SendOfferOrAck(sourceMsg, response);
@@ -511,7 +511,7 @@ public class DHCPServer : IDHCPServer
         //All others                MAY                
 
         response.Options.Add(new DHCPOptionServerIdentifier(_socket.LocalEndPoint.Address));
-        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask)) 
+        if(sourceMsg.IsRequestedParameter(TDHCPOption.SubnetMask))
             response.Options.Add(new DHCPOptionSubnetMask(SubnetMask));
         AppendConfiguredOptions(sourceMsg, response);
         await SendMessage(response, new IPEndPoint(sourceMsg.ClientIPAddress, 68));
@@ -577,9 +577,9 @@ public class DHCPServer : IDHCPServer
 
     private bool IsIPAddressInRange(IPAddress address, IPAddress start, IPAddress end)
     {
-        var adr32 = Utils.IPAddressToUInt32(address);
-        return adr32 >= Utils.IPAddressToUInt32(SanitizeHostRange(start)) && 
-                adr32 <= Utils.IPAddressToUInt32(SanitizeHostRange(end));
+        var adr32 = address.IPAddressToUInt32();
+        return adr32 >= SanitizeHostRange(start).IPAddressToUInt32() &&
+                adr32 <= SanitizeHostRange(end).IPAddressToUInt32();
     }
 
     /// <summary>
@@ -587,25 +587,25 @@ public class DHCPServer : IDHCPServer
     /// </summary>
     /// <param name="address">IP address to check</param>
     /// <returns>true when the ip address matches one of the known pool ranges</returns>
-    private bool IsIPAddressInPoolRange(IPAddress address) => 
-        IsIPAddressInRange(address, PoolStart, PoolEnd) || 
+    private bool IsIPAddressInPoolRange(IPAddress address) =>
+        IsIPAddressInRange(address, PoolStart, PoolEnd) ||
         Reservations.Exists(r => IsIPAddressInRange(address, r.PoolStart, r.PoolEnd));
 
-    private bool IPAddressIsInSubnet(IPAddress address) => 
-        (Utils.IPAddressToUInt32(address) & Utils.IPAddressToUInt32(SubnetMask)) ==
-            (Utils.IPAddressToUInt32(EndPoint.Address) & Utils.IPAddressToUInt32(SubnetMask));
+    private bool IPAddressIsInSubnet(IPAddress address) =>
+        (address.IPAddressToUInt32() & SubnetMask.IPAddressToUInt32()) ==
+            (EndPoint.Address.IPAddressToUInt32() & SubnetMask.IPAddressToUInt32());
 
     private bool IPAddressIsFree(IPAddress address, bool reuseReleased)
     {
-        if(!IPAddressIsInSubnet(address)) 
+        if(!IPAddressIsInSubnet(address))
             return false;
 
-        if(address.Equals(EndPoint.Address)) 
+        if(address.Equals(EndPoint.Address))
             return false;
 
         var released = true;
 
-        foreach(var client in _clients.Keys.Where(x=>x.IPAddress.Equals(address)))
+        foreach(var client in _clients.Keys.Where(x => x.IPAddress.Equals(address)))
         {
             if(reuseReleased && client.State == DHCPClient.TState.Released)
                 client.IPAddress = IPAddress.Any;
@@ -616,9 +616,9 @@ public class DHCPServer : IDHCPServer
         return released;
     }
 
-    private IPAddress SanitizeHostRange(IPAddress startend) => Utils.UInt32ToIPAddress(
-            (Utils.IPAddressToUInt32(EndPoint.Address) & Utils.IPAddressToUInt32(SubnetMask)) |
-            (Utils.IPAddressToUInt32(startend) & ~Utils.IPAddressToUInt32(SubnetMask))
+    private IPAddress SanitizeHostRange(IPAddress startend) => (EndPoint.Address.IPAddressToUInt32() & SubnetMask.IPAddressToUInt32() |
+            startend.IPAddressToUInt32() & ~SubnetMask.IPAddressToUInt32())
+.UInt32ToIPAddress(
         );
 
     private IPAddress AllocateIPAddress(DHCPMessage dhcpMessage)
@@ -630,11 +630,11 @@ public class DHCPServer : IDHCPServer
         if(reservation is not null)
         {
             // the client matches a reservation.. find the first free address in the reservation block
-            for(var host = Utils.IPAddressToUInt32(SanitizeHostRange(reservation.PoolStart)); 
-                host <= Utils.IPAddressToUInt32(SanitizeHostRange(reservation.PoolEnd)); 
+            for(var host = SanitizeHostRange(reservation.PoolStart).IPAddressToUInt32();
+                host <= SanitizeHostRange(reservation.PoolEnd).IPAddressToUInt32();
                 host++)
             {
-                var testIPAddress = Utils.UInt32ToIPAddress(host);
+                var testIPAddress = host.UInt32ToIPAddress();
 
                 // I don't see the point of avoiding released addresses for reservations (yet)
                 if(IPAddressIsFree(testIPAddress, true))
@@ -647,27 +647,27 @@ public class DHCPServer : IDHCPServer
             }
         }
 
-        
-        if(dhcpOptionRequestedIPAddress is not null && 
+
+        if(dhcpOptionRequestedIPAddress is not null &&
                 IPAddressIsFree(dhcpOptionRequestedIPAddress.IPAddress, true)) // there is a requested IP address. Is it in our subnet and free?
             return dhcpOptionRequestedIPAddress.IPAddress;
 
         // first try to find a free address without reusing released ones
-        for(var host = Utils.IPAddressToUInt32(SanitizeHostRange(PoolStart)); 
-            host <= Utils.IPAddressToUInt32(SanitizeHostRange(PoolEnd)); 
+        for(var host = SanitizeHostRange(PoolStart).IPAddressToUInt32();
+            host <= SanitizeHostRange(PoolEnd).IPAddressToUInt32();
             host++)
         {
-            var testIPAddress = Utils.UInt32ToIPAddress(host);
+            var testIPAddress = host.UInt32ToIPAddress();
             if(IPAddressIsFree(testIPAddress, false))
                 return testIPAddress;
         }
 
         // nothing found.. now start allocating released ones as well
-        for(var host = Utils.IPAddressToUInt32(SanitizeHostRange(PoolStart)); 
-            host <= Utils.IPAddressToUInt32(SanitizeHostRange(PoolEnd)); 
+        for(var host = SanitizeHostRange(PoolStart).IPAddressToUInt32();
+            host <= SanitizeHostRange(PoolEnd).IPAddressToUInt32();
             host++)
         {
-            var testIPAddress = Utils.UInt32ToIPAddress(host);
+            var testIPAddress = host.UInt32ToIPAddress();
             if(IPAddressIsFree(testIPAddress, true))
                 return testIPAddress;
         }
@@ -688,7 +688,7 @@ public class DHCPServer : IDHCPServer
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
-        Task<(IPEndPoint,ReadOnlyMemory<byte>)>? receiveTask = default;
+        Task<(IPEndPoint, ReadOnlyMemory<byte>)>? receiveTask = default;
         Task? timerTask = default;
 
         _logger?.LogInformation("Maintask has started");
@@ -709,7 +709,7 @@ public class DHCPServer : IDHCPServer
                         (var ipEndPoint, var data) = await receiveTask;
                         await OnReceive(ipEndPoint, data);
                     }
-                    catch(UDPSocketException ex) when (!ex.IsFatal)
+                    catch(UDPSocketException ex) when(!ex.IsFatal)
                     {
                         // udp socket says something non-fatal happened, ignore and try receiving the next packet
                     }
@@ -732,7 +732,7 @@ public class DHCPServer : IDHCPServer
                 }
             }
             // this ensures a normal exit is always handled via the catch clause of OperationCanceledException
-            cancellationToken.ThrowIfCancellationRequested();   
+            cancellationToken.ThrowIfCancellationRequested();
         }
         catch(OperationCanceledException)
         {

@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionOptionOverload : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionOptionOverload : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionOptionOverload();
-        if(s.Length != 1) 
+        if(s.Length != 1)
             throw new IOException("Invalid DHCP option length");
         result.Overload = (byte)s.ReadByte();
         return result;

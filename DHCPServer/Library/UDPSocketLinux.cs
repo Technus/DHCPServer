@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class UDPSocketLinux : IUDPSocket
 {
@@ -27,21 +27,21 @@ public class UDPSocketLinux : IUDPSocket
             Console.WriteLine($"{nic.Id}");
 
         var selectedNic = NetworkInterface.GetAllNetworkInterfaces()
-            .FirstOrDefault(x => x.GetIPProperties().UnicastAddresses.Select(a => a.Address).Contains(localEndPoint.Address)) ?? 
+            .FirstOrDefault(x => x.GetIPProperties().UnicastAddresses.Select(a => a.Address).Contains(localEndPoint.Address)) ??
             throw new UDPSocketException($"Can't find the appropriate network interface associated with endpoint '{localEndPoint}'") { IsFatal = true };
-        
+
         _maxPacketSize = maxPacketSize;
         _disposed = false;
 
-        _IPv6 = (localEndPoint.AddressFamily == AddressFamily.InterNetworkV6);
+        _IPv6 = localEndPoint.AddressFamily == AddressFamily.InterNetworkV6;
 
         _socket = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
         _socket.EnableBroadcast = true;
-        _socket.ExclusiveAddressUse = false;    
+        _socket.ExclusiveAddressUse = false;
         //_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         _socket.SendBufferSize = 65536;
         _socket.ReceiveBufferSize = 65536;
-        if(!_IPv6) 
+        if(!_IPv6)
             _socket.DontFragment = dontFragment;
         if(ttl >= 0)
             _socket.Ttl = ttl;
@@ -102,7 +102,7 @@ public class UDPSocketLinux : IUDPSocket
         catch(OperationCanceledException)
         {
             throw;
-        }        
+        }
         catch(Exception ex)
         {
             throw new UDPSocketException($"{nameof(Send)}", ex) { IsFatal = true };

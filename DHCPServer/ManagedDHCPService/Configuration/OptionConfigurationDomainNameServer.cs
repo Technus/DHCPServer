@@ -1,10 +1,9 @@
-﻿using GitHub.JPMikkers.DHCP;
-using System;
-using System.Linq;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace ManagedDHCPService;
+namespace DHCP.Server.Worker.Configuration;
 
-[Serializable()]
+[Serializable]
 public class OptionConfigurationDomainNameServer : OptionConfigurationAddresses
 {
     public OptionConfigurationDomainNameServer()
@@ -17,7 +16,7 @@ public class OptionConfigurationDomainNameServer : OptionConfigurationAddresses
         {
             IPAddresses = Addresses
                 .Where(x => x.Address != null)
-                .Select(x => x.Address)
+                .Select(x => x.Address).ToArray(),
         };
     }
 }

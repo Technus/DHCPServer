@@ -1,39 +1,36 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
-using System;
-using System.IO;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationVendorClassIdentifier : OptionConfiguration
 {
-    [Serializable]
-    public class OptionConfigurationVendorClassIdentifier : OptionConfiguration
+    public string DataAsString;
+    public string DataAsHex;
+
+    public OptionConfigurationVendorClassIdentifier()
     {
-        public string DataAsString;
-        public string DataAsHex;
+        DataAsString = "";
+        DataAsHex = "";
+    }
 
-        public OptionConfigurationVendorClassIdentifier()
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        byte[] data;
+
+        if(string.IsNullOrEmpty(DataAsString))
         {
-            DataAsString = "";
-            DataAsHex = "";
+            data = Utils.HexStringToBytes(DataAsHex);
+        }
+        else
+        {
+            using var m = new MemoryStream();
+            ParseHelper.WriteString(m, DataAsString);
+            m.Flush();
+            data = m.ToArray();
         }
 
-        protected override IDHCPOption ConstructDHCPOption()
-        {
-            byte[] data;
-
-            if(string.IsNullOrEmpty(DataAsString))
-            {
-                data = Utils.HexStringToBytes(DataAsHex);
-            }
-            else
-            {
-                using var m = new MemoryStream();
-                ParseHelper.WriteString(m, DataAsString);
-                m.Flush();
-                data = m.ToArray();
-            }
-
-            return new DHCPOptionVendorClassIdentifier(data);
-        }
+        return new DHCPOptionVendorClassIdentifier(data);
     }
 }

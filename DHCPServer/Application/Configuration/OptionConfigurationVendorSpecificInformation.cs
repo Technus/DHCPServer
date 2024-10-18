@@ -1,22 +1,20 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
-using System;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationVendorSpecificInformation : OptionConfiguration
 {
-    [Serializable]
-    public class OptionConfigurationVendorSpecificInformation : OptionConfiguration
+    public string Information;
+
+    public OptionConfigurationVendorSpecificInformation()
     {
-        public string Information;
+        Information = string.Empty;
+    }
 
-        public OptionConfigurationVendorSpecificInformation()
-        {
-            Information = "";
-        }
-
-        protected override IDHCPOption ConstructDHCPOption()
-        {
-            return new DHCPOptionVendorSpecificInformation(Information);
-        }
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        return new DHCPOptionVendorSpecificInformation(Information);
     }
 }

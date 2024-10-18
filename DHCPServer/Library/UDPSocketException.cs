@@ -1,22 +1,22 @@
 ﻿using System.Runtime.Serialization;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 [Serializable]
 public class UDPSocketException : Exception
 {
     public required bool IsFatal { get; init; }
 
-    public UDPSocketException() 
-    { 
+    public UDPSocketException()
+    {
     }
 
     public UDPSocketException(string message) : base(message)
-    { 
+    {
     }
 
-    public UDPSocketException(string message, Exception inner) : base(message, inner) 
-    { 
+    public UDPSocketException(string message, Exception inner) : base(message, inner)
+    {
     }
 
     [Obsolete("Serializable...")]

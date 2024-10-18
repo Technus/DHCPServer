@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionMessageType : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionMessageType : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionMessageType();
-        if(s.Length != 1) 
+        if(s.Length != 1)
             throw new IOException("Invalid DHCP option length");
         result.MessageType = (TDHCPMessageType)s.ReadByte();
         return result;

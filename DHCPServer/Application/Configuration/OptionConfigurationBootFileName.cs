@@ -1,21 +1,20 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationBootFileName : OptionConfiguration
 {
-    [Serializable]
-    public class OptionConfigurationBootFileName : OptionConfiguration
+    public string Name;
+
+    public OptionConfigurationBootFileName()
     {
-        public string Name;
+        Name = string.Empty;
+    }
 
-        public OptionConfigurationBootFileName()
-        {
-            Name = "";
-        }
-
-        protected override IDHCPOption ConstructDHCPOption()
-        {
-            return new DHCPOptionBootFileName(Name);
-        }
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        return new DHCPOptionBootFileName(Name);
     }
 }

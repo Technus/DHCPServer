@@ -1,21 +1,20 @@
-﻿using GitHub.JPMikkers.DHCP;
-using GitHub.JPMikkers.DHCP.Options;
+﻿using DHCP.Server.Library;
+using DHCP.Server.Library.Options;
 
-namespace DHCPServerApp
+namespace DHCP.Server.Service.Configuration;
+
+[Serializable]
+public class OptionConfigurationTFTPServerName : OptionConfiguration
 {
-    [Serializable]
-    public class OptionConfigurationTFTPServerName : OptionConfiguration
+    public string Name;
+
+    public OptionConfigurationTFTPServerName()
     {
-        public string Name;
+        Name = "";
+    }
 
-        public OptionConfigurationTFTPServerName()
-        {
-            Name = "";
-        }
-
-        protected override IDHCPOption ConstructDHCPOption()
-        {
-            return new DHCPOptionTFTPServerName(Name);
-        }
+    protected override IDHCPOption ConstructDHCPOption()
+    {
+        return new DHCPOptionTFTPServerName(Name);
     }
 }

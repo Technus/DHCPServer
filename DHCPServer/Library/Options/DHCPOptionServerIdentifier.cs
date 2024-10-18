@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace GitHub.JPMikkers.DHCP.Options;
+namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionServerIdentifier : DHCPOptionBase
 {
@@ -11,7 +11,7 @@ public class DHCPOptionServerIdentifier : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionServerIdentifier();
-        if(s.Length != 4) 
+        if(s.Length != 4)
             throw new IOException("Invalid DHCP option length");
         result.IPAddress = ParseHelper.ReadIPAddress(s);
         return result;

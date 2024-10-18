@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 [Serializable]
 public class DHCPClientInformation
@@ -18,7 +18,7 @@ public class DHCPClientInformation
         if(File.Exists(file))
         {
             using var s = File.OpenRead(file);
-            result = (s_serializer.Deserialize(s) as DHCPClientInformation) ?? new();
+            result = s_serializer.Deserialize(s) as DHCPClientInformation ?? new();
         }
         else
         {

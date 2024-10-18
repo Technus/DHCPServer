@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace GitHub.JPMikkers.DHCP;
+namespace DHCP.Server.Library;
 
 public class UDPSocketWindows : IUDPSocket
 {
@@ -26,18 +26,18 @@ public class UDPSocketWindows : IUDPSocket
         _maxPacketSize = maxPacketSize;
         _disposed = false;
 
-        _IPv6 = (localEndPoint.AddressFamily == AddressFamily.InterNetworkV6);
+        _IPv6 = localEndPoint.AddressFamily == AddressFamily.InterNetworkV6;
         _socket = new Socket(localEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
         _socket.EnableBroadcast = true;
         _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
         _socket.SendBufferSize = 65536;
         _socket.ReceiveBufferSize = 65536;
-        if(!_IPv6) 
+        if(!_IPv6)
             _socket.DontFragment = dontFragment;
         if(ttl >= 0)
             _socket.Ttl = ttl;
         _socket.Bind(localEndPoint);
-        _localEndPoint = (_socket.LocalEndPoint as IPEndPoint) ?? localEndPoint;
+        _localEndPoint = _socket.LocalEndPoint as IPEndPoint ?? localEndPoint;
 
         try
         {
@@ -98,7 +98,7 @@ public class UDPSocketWindows : IUDPSocket
         catch(OperationCanceledException)
         {
             throw;
-        }        
+        }
         catch(Exception ex)
         {
             throw new UDPSocketException($"{nameof(Send)}", ex) { IsFatal = true };

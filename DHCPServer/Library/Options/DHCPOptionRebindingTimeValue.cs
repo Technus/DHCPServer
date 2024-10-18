@@ -1,4 +1,4 @@
-﻿namespace GitHub.JPMikkers.DHCP.Options;
+﻿namespace DHCP.Server.Library.Options;
 
 public class DHCPOptionRebindingTimeValue : DHCPOptionBase
 {
@@ -9,7 +9,7 @@ public class DHCPOptionRebindingTimeValue : DHCPOptionBase
     public override IDHCPOption FromStream(Stream s)
     {
         var result = new DHCPOptionRebindingTimeValue();
-        if(s.Length != 4) 
+        if(s.Length != 4)
             throw new IOException("Invalid DHCP option length");
         result.TimeSpan = TimeSpan.FromSeconds(ParseHelper.ReadUInt32(s));
         return result;
